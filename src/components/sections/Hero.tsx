@@ -97,19 +97,12 @@ const HeroContent = styled.div`
 const HeroTitle = styled(motion.h1)`
   color: white;
   font-family: var(--font-heading);
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   margin-bottom: 1.5rem;
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.3);
   animation: ${fadeUp} 0.8s ease-out;
-
-  .highlight {
-    color: var(--color-secondary-400);
-    display: block;
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    margin-top: 0.5rem;
-  }
 `;
 
 const HeroTagline = styled(motion.p)`
@@ -456,8 +449,7 @@ export const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              {hero.title || 'Global Society of Tigray'}
-              <span className="highlight">{hero.subtitle || 'Scholars and Professionals'}</span>
+              Global Society of Tigray Scholars and Professionals
             </HeroTitle>
 
             <HeroTagline

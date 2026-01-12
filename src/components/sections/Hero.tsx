@@ -112,12 +112,13 @@ const HeroTitle = styled(motion.h1)`
   }
 `;
 
-const HeroSubtitle = styled(motion.p)`
-  color: rgba(255, 255, 255, 0.9);
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  line-height: 1.8;
+const HeroTagline = styled(motion.p)`
+  color: var(--color-secondary-400);
+  font-family: var(--font-heading);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 500;
+  letter-spacing: 1px;
   margin: 0 auto 2.5rem;
-  max-width: 700px;
   animation: ${fadeUp} 0.8s ease-out 0.2s both;
 `;
 
@@ -459,13 +460,13 @@ export const Hero = () => {
               <span className="highlight">{hero.subtitle || 'Scholars and Professionals'}</span>
             </HeroTitle>
 
-            <HeroSubtitle
+            <HeroTagline
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              {hero.description || 'A global knowledge network of academics, professionals, and intellectuals dedicated to leveraging expertise for the reconstruction and sustainable development of Tigray.'}
-            </HeroSubtitle>
+              Empowering Knowledge, Advancing Tigray
+            </HeroTagline>
 
             <HeroActions
               initial={{ opacity: 0, y: 30 }}

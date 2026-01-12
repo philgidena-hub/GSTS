@@ -6,15 +6,14 @@ import { getFunctions } from 'firebase/functions';
 import { getAnalytics } from 'firebase/analytics';
 
 // Firebase configuration
-// Replace these values with your actual Firebase project config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'your-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'your-project.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'your-project-id',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'your-project.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || 'your-sender-id',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || 'your-app-id',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'your-measurement-id',
+  apiKey: 'AIzaSyBVB5s9QuTxxJjjjLFOsY18v_BGMnD-aO0',
+  authDomain: 'gsts-cb4d1.firebaseapp.com',
+  projectId: 'gsts-cb4d1',
+  storageBucket: 'gsts-cb4d1.firebasestorage.app',
+  messagingSenderId: '831779851938',
+  appId: '1:831779851938:web:7b52e945f6d6d93b1a51fb',
+  measurementId: 'G-BTPKL71YSG',
 };
 
 // Initialize Firebase

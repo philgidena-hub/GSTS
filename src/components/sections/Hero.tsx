@@ -205,6 +205,11 @@ const AnimatedWord = styled.span<{ $delay: number }>`
   animation: ${slideInLeft} 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   animation-delay: ${({ $delay }) => $delay}s;
   opacity: 0;
+  margin-right: 0.3em;
+
+  &:last-child {
+    margin-right: 0;
+  }
 `;
 
 const HighlightedText = styled.span`
@@ -625,8 +630,8 @@ export const Hero = () => {
   const navigate = useNavigate();
   const { hero } = useContentStore();
 
-  const titleWords = ['Global', 'Society', 'of', 'Tigray'];
-  const highlightWords = ['Scholars', '&', 'Professionals'];
+  const titleWords = ['Global', 'Society', 'of', 'Tigray', 'Scholars'];
+  const highlightWords = ['&', 'Professionals'];
 
   return (
     <>
@@ -654,14 +659,14 @@ export const Hero = () => {
               <HeroTitle>
                 {titleWords.map((word, index) => (
                   <AnimatedWord key={index} $delay={0.1 + index * 0.1}>
-                    {word}{' '}
+                    {word}
                   </AnimatedWord>
                 ))}
                 <br />
                 <HighlightedText>
                   {highlightWords.map((word, index) => (
-                    <AnimatedWord key={index} $delay={0.5 + index * 0.1}>
-                      {word}{' '}
+                    <AnimatedWord key={index} $delay={0.6 + index * 0.1}>
+                      {word}
                     </AnimatedWord>
                   ))}
                 </HighlightedText>

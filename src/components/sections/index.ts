@@ -1,0 +1,11 @@
+export { Hero } from './Hero';
+export { About } from './About';
+export { Services } from './Services';
+export { Statistics } from './Statistics';
+export { Projects } from './Projects';
+export { News } from './News';
+export { Contact } from './Contact';
+export { CTA } from './CTA';
+export { ThematicAreas } from './ThematicAreas';
+export { ServingYou } from './ServingYou';
+export { GetInvolved } from './GetInvolved';

@@ -1,0 +1,507 @@
+import { useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
+import { motion } from 'framer-motion';
+import {
+  ArrowRight,
+  Heart,
+  Building2,
+  Scale,
+  Users,
+  Play,
+} from 'lucide-react';
+
+// Animations
+const fadeUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+`;
+
+const HeroSection = styled.section`
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+`;
+
+const HeroBackground = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 41, 102, 0.85) 0%,
+      rgba(0, 51, 128, 0.8) 50%,
+      rgba(0, 61, 153, 0.75) 100%
+    );
+    z-index: 1;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const HeroOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(0, 41, 102, 0.3) 100%
+  );
+  z-index: 1;
+`;
+
+const HeroMain = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 120px;
+  padding-bottom: 120px;
+  position: relative;
+  z-index: 2;
+
+  @media (max-width: 768px) {
+    padding-top: 100px;
+    padding-bottom: 80px;
+  }
+`;
+
+const HeroContent = styled.div`
+  max-width: 900px;
+  text-align: center;
+  padding: 0 var(--container-padding);
+`;
+
+const HeroTitle = styled(motion.h1)`
+  color: white;
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.3);
+  animation: ${fadeUp} 0.8s ease-out;
+
+  .highlight {
+    color: var(--color-secondary-400);
+    display: block;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    margin-top: 0.5rem;
+  }
+`;
+
+const HeroSubtitle = styled(motion.p)`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.8;
+  margin: 0 auto 2.5rem;
+  max-width: 700px;
+  animation: ${fadeUp} 0.8s ease-out 0.2s both;
+`;
+
+const HeroActions = styled(motion.div)`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: ${fadeUp} 0.8s ease-out 0.4s both;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+
+const PrimaryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 100%);
+  border: none;
+  border-radius: 4px;
+  color: var(--color-primary-900);
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(212, 160, 18, 0.4);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(212, 160, 18, 0.5);
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
+`;
+
+const SecondaryButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  color: white;
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-3px);
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
+`;
+
+const PlayIcon = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${pulse} 2s ease-in-out infinite;
+`;
+
+// Service Cards Section
+const ServiceCardsSection = styled.div`
+  position: relative;
+  z-index: 10;
+  margin-top: -80px;
+  padding: 0 var(--container-padding) 4rem;
+`;
+
+const ServiceCardsContainer = styled.div`
+  max-width: var(--container-max);
+  margin: 0 auto;
+`;
+
+const ServiceCardsGrid = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ServiceCard = styled(motion.div)<{ $color: string }>`
+  background: white;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-right: 1px solid var(--color-neutral-100);
+  position: relative;
+  overflow: hidden;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  @media (max-width: 1200px) {
+    border-right: none;
+    border-bottom: 1px solid var(--color-neutral-100);
+
+    &:nth-of-type(2n) {
+      border-right: none;
+    }
+
+    &:nth-of-type(1),
+    &:nth-of-type(2) {
+      border-right: 1px solid var(--color-neutral-100);
+    }
+  }
+
+  @media (max-width: 640px) {
+    border-right: none;
+    border-bottom: 1px solid var(--color-neutral-100);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: ${({ $color }) => $color};
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    background: var(--color-neutral-50);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+
+    &::before {
+      transform: scaleX(1);
+    }
+
+    .service-icon {
+      transform: scale(1.1);
+    }
+
+    .service-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  &:first-of-type {
+    border-radius: 8px 0 0 8px;
+
+    @media (max-width: 1200px) {
+      border-radius: 8px 0 0 0;
+    }
+
+    @media (max-width: 640px) {
+      border-radius: 8px 8px 0 0;
+    }
+  }
+
+  &:last-of-type {
+    border-radius: 0 8px 8px 0;
+
+    @media (max-width: 1200px) {
+      border-radius: 0 0 8px 0;
+    }
+
+    @media (max-width: 640px) {
+      border-radius: 0 0 8px 8px;
+    }
+  }
+`;
+
+const ServiceIconWrapper = styled.div<{ $color: string }>`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: ${({ $color }) => $color};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 1.25rem;
+  transition: transform 0.3s ease;
+`;
+
+const ServiceTitle = styled.h3`
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin-bottom: 0.75rem;
+`;
+
+const ServiceDescription = styled.p`
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  line-height: 1.6;
+  margin: 0 0 1rem;
+`;
+
+const ServiceArrow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(4px);
+  }
+`;
+
+const services = [
+  {
+    icon: Heart,
+    title: 'Humanitarian Advocacy',
+    description: 'Supporting communities through crisis response and sustainable initiatives.',
+    color: '#ef4444',
+    link: '/services/humanitarian'
+  },
+  {
+    icon: Building2,
+    title: 'Reconstruction & Development',
+    description: 'Building infrastructure and fostering economic growth for prosperity.',
+    color: '#0052cc',
+    link: '/services/development'
+  },
+  {
+    icon: Scale,
+    title: 'Governance & Justice',
+    description: 'Promoting transparent governance and equitable justice systems.',
+    color: '#10b981',
+    link: '/services/governance'
+  },
+  {
+    icon: Users,
+    title: 'Professional Networking',
+    description: 'Connecting scholars and professionals worldwide for impact.',
+    color: '#d4a012',
+    link: '/services/networking'
+  }
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.3
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut' as const
+    }
+  }
+};
+
+export const Hero = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <HeroSection>
+        <HeroBackground>
+          <img src="/images/Hero_Image.jpg" alt="GSTS Community" />
+        </HeroBackground>
+        <HeroOverlay />
+
+        <HeroMain>
+          <HeroContent>
+            <HeroTitle
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              Global Society of Tigray
+              <span className="highlight">Scholars and Professionals</span>
+            </HeroTitle>
+
+            <HeroSubtitle
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              A global knowledge network of academics, professionals, and intellectuals
+              dedicated to leveraging expertise for the reconstruction and sustainable
+              development of Tigray.
+            </HeroSubtitle>
+
+            <HeroActions
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <PrimaryButton onClick={() => navigate('/membership')}>
+                Join GSTS
+                <ArrowRight size={18} />
+              </PrimaryButton>
+              <SecondaryButton onClick={() => navigate('/about')}>
+                <PlayIcon>
+                  <Play size={16} fill="white" />
+                </PlayIcon>
+                Watch Video
+              </SecondaryButton>
+            </HeroActions>
+          </HeroContent>
+        </HeroMain>
+      </HeroSection>
+
+      <ServiceCardsSection>
+        <ServiceCardsContainer>
+          <ServiceCardsGrid
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {services.map((service, index) => (
+              <ServiceCard
+                key={index}
+                $color={service.color}
+                variants={cardVariants}
+                onClick={() => navigate(service.link)}
+              >
+                <ServiceIconWrapper $color={service.color} className="service-icon">
+                  <service.icon size={28} />
+                </ServiceIconWrapper>
+                <ServiceTitle>{service.title}</ServiceTitle>
+                <ServiceDescription>{service.description}</ServiceDescription>
+                <ServiceArrow className="service-arrow">
+                  Read More <ArrowRight size={14} />
+                </ServiceArrow>
+              </ServiceCard>
+            ))}
+          </ServiceCardsGrid>
+        </ServiceCardsContainer>
+      </ServiceCardsSection>
+    </>
+  );
+};

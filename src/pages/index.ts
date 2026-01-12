@@ -1,0 +1,8 @@
+export { Home } from './Home';
+export { Membership } from './Membership';
+export { Login } from './Login';
+export { About } from './About';
+export { Services } from './Services';
+export { Contact } from './Contact';
+export { News } from './News';
+export { Projects } from './Projects';

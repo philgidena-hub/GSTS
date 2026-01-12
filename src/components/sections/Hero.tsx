@@ -230,10 +230,10 @@ const ServiceCardsGrid = styled(motion.div)`
 
 const ServiceCard = styled(motion.div)<{ $color: string }>`
   background: white;
-  padding: 2rem;
-  text-align: center;
+  padding: 2.5rem 2rem;
+  text-align: left;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   border-right: 1px solid var(--color-neutral-100);
   position: relative;
   overflow: hidden;
@@ -274,20 +274,44 @@ const ServiceCard = styled(motion.div)<{ $color: string }>`
     height: 4px;
     background: ${({ $color }) => $color};
     transform: scaleX(0);
-    transition: transform 0.3s ease;
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, ${({ $color }) => $color}10, transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
   }
 
   &:hover {
     background: var(--color-neutral-50);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.2);
     z-index: 1;
+    transform: translateY(-5px);
 
     &::before {
       transform: scaleX(1);
     }
 
+    &::after {
+      opacity: 1;
+    }
+
     .service-icon {
-      transform: scale(1.1);
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .service-number {
+      opacity: 0.15;
+      transform: translateY(-10px);
     }
 
     .service-arrow {
@@ -321,25 +345,41 @@ const ServiceCard = styled(motion.div)<{ $color: string }>`
   }
 `;
 
+const ServiceNumber = styled.span<{ $color: string }>`
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  font-weight: 800;
+  color: ${({ $color }) => $color};
+  opacity: 0.1;
+  line-height: 1;
+  transition: all 0.4s ease;
+  user-select: none;
+`;
+
 const ServiceIconWrapper = styled.div<{ $color: string }>`
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: ${({ $color }) => $color};
+  width: 65px;
+  height: 65px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, ${({ $color }) => $color}, ${({ $color }) => $color}dd);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  margin: 0 auto 1.25rem;
-  transition: transform 0.3s ease;
+  margin-bottom: 1.25rem;
+  transition: all 0.4s ease;
+  box-shadow: 0 8px 20px -5px ${({ $color }) => $color}50;
 `;
 
 const ServiceTitle = styled.h3`
   font-family: var(--font-heading);
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-neutral-900);
   margin-bottom: 0.75rem;
+  line-height: 1.3;
 `;
 
 const ServiceDescription = styled.p`
@@ -487,15 +527,18 @@ export const Hero = () => {
                 key={index}
                 $color={service.color}
                 variants={cardVariants}
-                onClick={() => navigate(service.link)}
+                onClick={() => navigate('/membership')}
               >
+                <ServiceNumber $color={service.color} className="service-number">
+                  {String(index + 1).padStart(2, '0')}
+                </ServiceNumber>
                 <ServiceIconWrapper $color={service.color} className="service-icon">
                   <service.icon size={28} />
                 </ServiceIconWrapper>
                 <ServiceTitle>{service.title}</ServiceTitle>
                 <ServiceDescription>{service.description}</ServiceDescription>
                 <ServiceArrow className="service-arrow">
-                  Read More <ArrowRight size={14} />
+                  Join Now <ArrowRight size={14} />
                 </ServiceArrow>
               </ServiceCard>
             ))}

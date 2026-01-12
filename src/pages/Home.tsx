@@ -1,6 +1,7 @@
 import {
   Hero,
   About,
+  Statistics,
   Projects,
   News,
   GetInvolved,
@@ -11,6 +12,7 @@ export const Home = () => {
     <>
       <Hero />
       <About />
+      <Statistics />
       <Projects />
       <News />
       <GetInvolved />

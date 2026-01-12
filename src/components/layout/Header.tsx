@@ -328,25 +328,44 @@ const HeaderActions = styled.div`
 const JoinButton = styled(Link)<{ $isScrolled: boolean }>`
   display: inline-flex;
   align-items: center;
-  padding: 0.625rem 1.5rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
   font-family: var(--font-heading);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: ${({ $isScrolled }) => ($isScrolled ? 'white' : 'var(--color-primary-900)')};
-  background: ${({ $isScrolled }) =>
-    $isScrolled
-      ? 'linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 100%)'
-      : 'var(--color-secondary-500)'};
+  letter-spacing: 1px;
+  color: var(--color-primary-900);
+  background: linear-gradient(135deg, var(--color-secondary-400) 0%, var(--color-secondary-500) 50%, var(--color-secondary-600) 100%);
   border-radius: 4px;
   text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 15px rgba(212, 160, 18, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(212, 160, 18, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(212, 160, 18, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(212, 160, 18, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 `;
 

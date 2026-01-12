@@ -217,7 +217,10 @@ const ServiceCardsContainer = styled.div`
 const ServiceCardsGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
@@ -229,131 +232,184 @@ const ServiceCardsGrid = styled(motion.div)`
 `;
 
 const ServiceCard = styled(motion.div)<{ $color: string }>`
-  background: ${({ $color }) => $color};
-  padding: 2rem 1.75rem 5rem;
+  background: white;
+  padding: 2rem;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  min-height: 220px;
   border-radius: 8px;
+  border-right: 1px solid var(--color-neutral-100);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Folded corner effect */
+  &:last-child {
+    border-right: none;
+  }
+
+  @media (max-width: 1200px) {
+    border-right: none;
+    border-bottom: 1px solid var(--color-neutral-100);
+  }
+
+  /* Colored accent on hover */
   &::before {
     content: '';
     position: absolute;
-    bottom: 0;
+    top: 0;
+    left: 0;
     right: 0;
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.15) 50%);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 4px;
+    background: ${({ $color }) => $color};
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Subtle background gradient on hover */
   &::after {
     content: '';
     position: absolute;
     bottom: 0;
+    left: 0;
     right: 0;
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, transparent 50%, white 50%);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    background: linear-gradient(to top, ${({ $color }) => $color}08, transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
   }
 
   &:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+    z-index: 2;
 
-    &::before,
-    &::after {
-      width: 100px;
-      height: 100px;
+    &::before {
+      transform: scaleX(1);
     }
 
-    .service-icon {
-      transform: scale(1.1);
+    &::after {
+      opacity: 1;
+    }
+
+    .service-icon-wrapper {
+      transform: scale(1.1) rotate(5deg);
     }
 
     .service-number {
-      transform: translate(5px, -5px);
-      opacity: 0.4;
+      transform: translateY(-5px);
+      opacity: 0.2;
     }
 
-    .service-title {
-      transform: translateX(5px);
+    .service-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  &:first-of-type {
+    border-radius: 8px 0 0 8px;
+    @media (max-width: 1200px) {
+      border-radius: 8px 8px 0 0;
+    }
+  }
+
+  &:last-of-type {
+    border-radius: 0 8px 8px 0;
+    @media (max-width: 1200px) {
+      border-radius: 0 0 8px 8px;
     }
   }
 `;
 
-const ServiceNumber = styled.span`
+const ServiceNumber = styled.span<{ $color: string }>`
   position: absolute;
-  bottom: 12px;
-  right: 20px;
+  top: 1rem;
+  right: 1.5rem;
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 4.5rem;
   font-weight: 800;
-  color: white;
-  opacity: 0.3;
+  color: ${({ $color }) => $color};
+  opacity: 0.12;
   line-height: 1;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  z-index: 1;
 `;
 
-const ServiceIconWrapper = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  width: 50px;
-  height: 50px;
+const ServiceIconWrapper = styled.div<{ $color: string }>`
+  width: 65px;
+  height: 65px;
+  border-radius: 16px;
+  background: ${({ $color }) => $color};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  opacity: 0.9;
+  margin-bottom: 1.5rem;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-
-  svg {
-    stroke-width: 1.5;
-  }
+  box-shadow: 0 8px 20px -5px ${({ $color }) => $color}40;
 `;
 
 const ServiceTitle = styled.h3`
   font-family: var(--font-heading);
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
+  color: var(--color-neutral-900);
+  margin-bottom: 0.75rem;
   line-height: 1.3;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const ServiceDescription = styled.p`
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+`;
+
+const ServiceArrow = styled.div<{ $color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(4px);
+  }
 `;
 
 const services = [
   {
     icon: Heart,
     title: 'Humanitarian Advocacy',
-    color: '#22c55e',
-    link: '/services/humanitarian'
+    description: 'Supporting communities through crisis response and sustainable initiatives.',
+    color: '#ef4444',
   },
   {
     icon: Building2,
     title: 'Reconstruction & Development',
+    description: 'Building infrastructure and fostering economic growth for prosperity.',
     color: '#0052cc',
-    link: '/services/development'
   },
   {
     icon: Scale,
     title: 'Governance & Justice',
-    color: '#f59e0b',
-    link: '/services/governance'
+    description: 'Promoting transparent governance and equitable justice systems.',
+    color: '#10b981',
   },
   {
     icon: Users,
     title: 'Professional Networking',
-    color: '#ef4444',
-    link: '/services/networking'
+    description: 'Connecting scholars and professionals worldwide for impact.',
+    color: '#d4a012',
   }
 ];
 
@@ -446,13 +502,17 @@ export const Hero = () => {
                 variants={cardVariants}
                 onClick={() => navigate('/membership')}
               >
-                <ServiceTitle className="service-title">{service.title}</ServiceTitle>
-                <ServiceIconWrapper className="service-icon">
-                  <service.icon size={32} />
-                </ServiceIconWrapper>
-                <ServiceNumber className="service-number">
+                <ServiceNumber $color={service.color} className="service-number">
                   {String(index + 1).padStart(2, '0')}
                 </ServiceNumber>
+                <ServiceIconWrapper $color={service.color} className="service-icon-wrapper">
+                  <service.icon size={28} />
+                </ServiceIconWrapper>
+                <ServiceTitle>{service.title}</ServiceTitle>
+                <ServiceDescription>{service.description}</ServiceDescription>
+                <ServiceArrow $color={service.color} className="service-arrow">
+                  Join Now <ArrowRight size={14} />
+                </ServiceArrow>
               </ServiceCard>
             ))}
           </ServiceCardsGrid>

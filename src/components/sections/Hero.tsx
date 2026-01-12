@@ -9,6 +9,7 @@ import {
   Scale,
   Users,
   Play,
+  Sparkles,
 } from 'lucide-react';
 import { useContentStore } from '../../stores/contentStore';
 
@@ -27,6 +28,59 @@ const fadeUp = keyframes`
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+`;
+
+const glow = keyframes`
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(212, 160, 18, 0.4));
+    opacity: 0.8;
+  }
+  50% {
+    filter: drop-shadow(0 0 40px rgba(212, 160, 18, 0.8));
+    opacity: 1;
+  }
+`;
+
+const slideInLeft = keyframes`
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+`;
+
+const scaleIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const typewriter = keyframes`
+  from { width: 0; }
+  to { width: 100%; }
+`;
+
+const blink = keyframes`
+  0%, 50% { border-color: var(--color-secondary-400); }
+  51%, 100% { border-color: transparent; }
 `;
 
 const HeroSection = styled.section`
@@ -72,6 +126,18 @@ const HeroOverlay = styled.div`
   z-index: 1;
 `;
 
+const AnimatedGridPattern = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+`;
+
 const HeroMain = styled.div`
   flex: 1;
   display: flex;
@@ -89,30 +155,123 @@ const HeroMain = styled.div`
 `;
 
 const HeroContent = styled.div`
-  max-width: 900px;
+  max-width: 1000px;
   text-align: center;
   padding: 0 var(--container-padding);
+`;
+
+const HeroLabel = styled(motion.div)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(212, 160, 18, 0.15);
+  border: 1px solid rgba(212, 160, 18, 0.3);
+  border-radius: 50px;
+  margin-bottom: 1.5rem;
+  animation: ${scaleIn} 0.6s ease-out;
+
+  span {
+    color: var(--color-secondary-400);
+    font-family: var(--font-heading);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  svg {
+    color: var(--color-secondary-400);
+    animation: ${glow} 2s ease-in-out infinite;
+  }
+`;
+
+const HeroTitleWrapper = styled.div`
+  position: relative;
+  margin-bottom: 1.5rem;
 `;
 
 const HeroTitle = styled(motion.h1)`
   color: white;
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.3);
-  animation: ${fadeUp} 0.8s ease-out;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+`;
+
+const AnimatedWord = styled.span<{ $delay: number }>`
+  display: inline-block;
+  animation: ${slideInLeft} 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: ${({ $delay }) => $delay}s;
+  opacity: 0;
+`;
+
+const HighlightedText = styled.span`
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  background: linear-gradient(
+    135deg,
+    var(--color-secondary-400) 0%,
+    var(--color-secondary-500) 50%,
+    #ffd700 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-size: 200% auto;
+  animation: ${shimmer} 3s linear infinite;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-secondary-400), var(--color-secondary-600));
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: ${fadeUp} 0.6s ease-out 1.2s forwards;
+  }
 `;
 
 const HeroTagline = styled(motion.p)`
-  color: var(--color-secondary-400);
-  font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
-  font-weight: 500;
-  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-primary);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.7;
+  max-width: 700px;
   margin: 0 auto 2.5rem;
-  animation: ${fadeUp} 0.8s ease-out 0.2s both;
+  animation: ${fadeUp} 0.8s ease-out 0.8s both;
+`;
+
+const TypewriterWrapper = styled.span`
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid var(--color-secondary-400);
+  animation: ${typewriter} 2s steps(30) 0.5s forwards, ${blink} 0.8s step-end infinite;
+  width: 0;
+`;
+
+const FloatingElement = styled.div<{ $top: string; $left: string; $delay: number; $size: number }>`
+  position: absolute;
+  top: ${({ $top }) => $top};
+  left: ${({ $left }) => $left};
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(212, 160, 18, 0.3), rgba(212, 160, 18, 0.1));
+  animation: ${float} ${({ $delay }) => 4 + $delay}s ease-in-out infinite;
+  animation-delay: ${({ $delay }) => $delay}s;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const HeroActions = styled(motion.div)`
@@ -128,31 +287,61 @@ const HeroActions = styled(motion.div)`
   }
 `;
 
+const buttonShine = keyframes`
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+`;
+
 const PrimaryButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 100%);
+  padding: 1rem 2.25rem;
+  background: linear-gradient(135deg, var(--color-secondary-400) 0%, var(--color-secondary-500) 50%, var(--color-secondary-600) 100%);
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   color: var(--color-primary-900);
   font-family: var(--font-heading);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(212, 160, 18, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(212, 160, 18, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: none;
+  }
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(212, 160, 18, 0.5);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(212, 160, 18, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+    &::before {
+      animation: ${buttonShine} 0.8s ease;
+    }
   }
 
   &:active {
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1);
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(4px);
   }
 `;
 
@@ -161,9 +350,10 @@ const SecondaryButton = styled.button`
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 2rem;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
   color: white;
   font-family: var(--font-heading);
   font-size: 0.9375rem;
@@ -171,16 +361,17 @@ const SecondaryButton = styled.button`
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.6);
-    transform: translateY(-3px);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
 
   &:active {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 `;
 
@@ -434,6 +625,9 @@ export const Hero = () => {
   const navigate = useNavigate();
   const { hero } = useContentStore();
 
+  const titleWords = ['Global', 'Society', 'of', 'Tigray'];
+  const highlightWords = ['Scholars', '&', 'Professionals'];
+
   return (
     <>
       <HeroSection>
@@ -441,29 +635,49 @@ export const Hero = () => {
           <img src={hero.backgroundImage || "/images/Hero_Image.jpg"} alt="GSTS Community" />
         </HeroBackground>
         <HeroOverlay />
+        <AnimatedGridPattern />
+
+        {/* Floating decorative elements */}
+        <FloatingElement $top="15%" $left="10%" $delay={0} $size={80} />
+        <FloatingElement $top="60%" $left="5%" $delay={1.5} $size={50} />
+        <FloatingElement $top="25%" $left="85%" $delay={0.8} $size={60} />
+        <FloatingElement $top="70%" $left="90%" $delay={2} $size={40} />
 
         <HeroMain>
           <HeroContent>
-            <HeroTitle
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              Global Society of Tigray Scholars and Professionals
-            </HeroTitle>
+            <HeroLabel>
+              <Sparkles size={16} />
+              <span>Welcome to GSTS</span>
+            </HeroLabel>
 
-            <HeroTagline
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Empowering Knowledge, Advancing Tigray
+            <HeroTitleWrapper>
+              <HeroTitle>
+                {titleWords.map((word, index) => (
+                  <AnimatedWord key={index} $delay={0.1 + index * 0.1}>
+                    {word}{' '}
+                  </AnimatedWord>
+                ))}
+                <br />
+                <HighlightedText>
+                  {highlightWords.map((word, index) => (
+                    <AnimatedWord key={index} $delay={0.5 + index * 0.1}>
+                      {word}{' '}
+                    </AnimatedWord>
+                  ))}
+                </HighlightedText>
+              </HeroTitle>
+            </HeroTitleWrapper>
+
+            <HeroTagline>
+              <TypewriterWrapper>
+                Empowering Knowledge, Advancing Tigray
+              </TypewriterWrapper>
             </HeroTagline>
 
             <HeroActions
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
             >
               <PrimaryButton onClick={() => navigate(hero.primaryButtonLink || '/membership')}>
                 {hero.primaryButtonText || 'Join GSTS'}

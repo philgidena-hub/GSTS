@@ -13,14 +13,38 @@ import {
 
 const GetInvolvedSection = styled.section`
   padding: 5rem 0;
-  background: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%);
   position: relative;
   overflow: hidden;
+`;
+
+const BackgroundImage = styled.div`
+  position: absolute;
+  inset: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 41, 102, 0.92) 0%,
+      rgba(0, 61, 153, 0.88) 50%,
+      rgba(0, 82, 204, 0.85) 100%
+    );
+    z-index: 1;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const BackgroundPattern = styled.div`
   position: absolute;
   inset: 0;
+  z-index: 2;
   background-image:
     radial-gradient(circle at 20% 80%, rgba(212, 160, 18, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
@@ -32,7 +56,7 @@ const Container = styled.div`
   margin: 0 auto;
   padding: 0 var(--container-padding);
   position: relative;
-  z-index: 1;
+  z-index: 3;
 `;
 
 const ContentGrid = styled.div`
@@ -348,6 +372,12 @@ export const GetInvolved = () => {
 
   return (
     <GetInvolvedSection ref={ref}>
+      <BackgroundImage>
+        <img
+          src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=2000&q=80"
+          alt=""
+        />
+      </BackgroundImage>
       <BackgroundPattern />
       <Container>
         <ContentGrid>

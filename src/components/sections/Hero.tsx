@@ -217,7 +217,7 @@ const ServiceCardsContainer = styled.div`
 const ServiceCardsGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  gap: 1.5rem;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
@@ -229,213 +229,130 @@ const ServiceCardsGrid = styled(motion.div)`
 `;
 
 const ServiceCard = styled(motion.div)<{ $color: string }>`
-  background: white;
-  padding: 2.5rem 2rem;
-  text-align: left;
+  background: ${({ $color }) => $color};
+  padding: 2rem 1.75rem 5rem;
   cursor: pointer;
-  transition: all 0.4s ease;
-  border-right: 1px solid var(--color-neutral-100);
   position: relative;
   overflow: hidden;
+  min-height: 220px;
+  border-radius: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &:last-child {
-    border-right: none;
-  }
-
-  @media (max-width: 1200px) {
-    border-right: none;
-    border-bottom: 1px solid var(--color-neutral-100);
-
-    &:nth-of-type(2n) {
-      border-right: none;
-    }
-
-    &:nth-of-type(1),
-    &:nth-of-type(2) {
-      border-right: 1px solid var(--color-neutral-100);
-    }
-  }
-
-  @media (max-width: 640px) {
-    border-right: none;
-    border-bottom: 1px solid var(--color-neutral-100);
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
+  /* Folded corner effect */
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
+    bottom: 0;
     right: 0;
-    height: 4px;
-    background: ${({ $color }) => $color};
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s ease;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.15) 50%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &::after {
     content: '';
     position: absolute;
     bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, ${({ $color }) => $color}10, transparent);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, transparent 50%, white 50%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &:hover {
-    background: var(--color-neutral-50);
-    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    transform: translateY(-5px);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
 
-    &::before {
-      transform: scaleX(1);
-    }
-
+    &::before,
     &::after {
-      opacity: 1;
+      width: 100px;
+      height: 100px;
     }
 
     .service-icon {
-      transform: scale(1.1) rotate(5deg);
+      transform: scale(1.1);
     }
 
     .service-number {
-      opacity: 0.15;
-      transform: translateY(-10px);
+      transform: translate(5px, -5px);
+      opacity: 0.4;
     }
 
-    .service-arrow {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  &:first-of-type {
-    border-radius: 8px 0 0 8px;
-
-    @media (max-width: 1200px) {
-      border-radius: 8px 0 0 0;
-    }
-
-    @media (max-width: 640px) {
-      border-radius: 8px 8px 0 0;
-    }
-  }
-
-  &:last-of-type {
-    border-radius: 0 8px 8px 0;
-
-    @media (max-width: 1200px) {
-      border-radius: 0 0 8px 0;
-    }
-
-    @media (max-width: 640px) {
-      border-radius: 0 0 8px 8px;
+    .service-title {
+      transform: translateX(5px);
     }
   }
 `;
 
-const ServiceNumber = styled.span<{ $color: string }>`
+const ServiceNumber = styled.span`
   position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  font-family: var(--font-heading);
-  font-size: 4rem;
+  bottom: 12px;
+  right: 20px;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
   font-weight: 800;
-  color: ${({ $color }) => $color};
-  opacity: 0.1;
+  color: white;
+  opacity: 0.3;
   line-height: 1;
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  z-index: 1;
 `;
 
-const ServiceIconWrapper = styled.div<{ $color: string }>`
-  width: 65px;
-  height: 65px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, ${({ $color }) => $color}, ${({ $color }) => $color}dd);
+const ServiceIconWrapper = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  margin-bottom: 1.25rem;
-  transition: all 0.4s ease;
-  box-shadow: 0 8px 20px -5px ${({ $color }) => $color}50;
+  opacity: 0.9;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+
+  svg {
+    stroke-width: 1.5;
+  }
 `;
 
 const ServiceTitle = styled.h3`
   font-family: var(--font-heading);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-neutral-900);
-  margin-bottom: 0.75rem;
+  color: white;
+  margin-bottom: 0.5rem;
   line-height: 1.3;
-`;
-
-const ServiceDescription = styled.p`
-  font-size: 0.875rem;
-  color: var(--color-neutral-500);
-  line-height: 1.6;
-  margin: 0 0 1rem;
-`;
-
-const ServiceArrow = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--color-primary-600);
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 0.3s ease;
-
-  svg {
-    transition: transform 0.3s ease;
-  }
-
-  &:hover svg {
-    transform: translateX(4px);
-  }
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
 const services = [
   {
     icon: Heart,
     title: 'Humanitarian Advocacy',
-    description: 'Supporting communities through crisis response and sustainable initiatives.',
-    color: '#ef4444',
+    color: '#22c55e',
     link: '/services/humanitarian'
   },
   {
     icon: Building2,
     title: 'Reconstruction & Development',
-    description: 'Building infrastructure and fostering economic growth for prosperity.',
     color: '#0052cc',
     link: '/services/development'
   },
   {
     icon: Scale,
     title: 'Governance & Justice',
-    description: 'Promoting transparent governance and equitable justice systems.',
-    color: '#10b981',
+    color: '#f59e0b',
     link: '/services/governance'
   },
   {
     icon: Users,
     title: 'Professional Networking',
-    description: 'Connecting scholars and professionals worldwide for impact.',
-    color: '#d4a012',
+    color: '#ef4444',
     link: '/services/networking'
   }
 ];
@@ -529,17 +446,13 @@ export const Hero = () => {
                 variants={cardVariants}
                 onClick={() => navigate('/membership')}
               >
-                <ServiceNumber $color={service.color} className="service-number">
+                <ServiceTitle className="service-title">{service.title}</ServiceTitle>
+                <ServiceIconWrapper className="service-icon">
+                  <service.icon size={32} />
+                </ServiceIconWrapper>
+                <ServiceNumber className="service-number">
                   {String(index + 1).padStart(2, '0')}
                 </ServiceNumber>
-                <ServiceIconWrapper $color={service.color} className="service-icon">
-                  <service.icon size={28} />
-                </ServiceIconWrapper>
-                <ServiceTitle>{service.title}</ServiceTitle>
-                <ServiceDescription>{service.description}</ServiceDescription>
-                <ServiceArrow className="service-arrow">
-                  Join Now <ArrowRight size={14} />
-                </ServiceArrow>
               </ServiceCard>
             ))}
           </ServiceCardsGrid>

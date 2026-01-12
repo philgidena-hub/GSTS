@@ -46,7 +46,7 @@
   --color-accent-info: #3b82f6;
 
   /* Typography */
-  --font-primary: 'Open Sans', system-ui, -apple-system, sans-serif;
+  --font-primary: 'Inter', 'Open Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Montserrat', sans-serif;
   --font-heading: 'Poppins', sans-serif;
 

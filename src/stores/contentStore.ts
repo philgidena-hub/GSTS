@@ -281,7 +281,7 @@ const defaultFAQs: FAQ[] = [
 const defaultSettings: SiteSettings = {
   siteName: 'GSTS',
   tagline: 'Global Society of Tigray Scholars and Professionals',
-  logo: '/images/logo.png',
+  logo: '/images/logo-gsts.png',
   favicon: '/favicon.svg',
   social: {
     facebook: 'https://facebook.com/gsts',

@@ -84,17 +84,16 @@ const BrandLogo = styled.div`
 const LogoIcon = styled.div`
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 100%);
-  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--color-primary-900);
-  box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
   animation: ${float} 3s ease-in-out infinite;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 `;
 
 const BrandName = styled.h1`
@@ -233,15 +232,15 @@ const MobileLogo = styled(Link)`
 const MobileLogoIcon = styled.div`
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: white;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 `;
 
 const MobileLogoText = styled.span`
@@ -557,13 +556,15 @@ export const Login = () => {
       <LeftSection>
         <LeftBackground>
           <img
-            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1920&q=80"
+            src="/images/Hero_Image.jpg"
             alt=""
           />
         </LeftBackground>
         <LeftContent>
           <BrandLogo>
-            <LogoIcon>G</LogoIcon>
+            <LogoIcon>
+              <img src="/images/logo-gsts.png" alt="GSTS Logo" />
+            </LogoIcon>
             <BrandName>GSTS</BrandName>
           </BrandLogo>
           <Tagline>
@@ -594,7 +595,9 @@ export const Login = () => {
           <CardAccent />
           <CardHeader>
             <MobileLogo to="/">
-              <MobileLogoIcon>G</MobileLogoIcon>
+              <MobileLogoIcon>
+                <img src="/images/logo-gsts.png" alt="GSTS Logo" />
+              </MobileLogoIcon>
               <MobileLogoText>GSTS</MobileLogoText>
             </MobileLogo>
             <WelcomeIcon>

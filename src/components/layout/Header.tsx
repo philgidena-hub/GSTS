@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuthStore } from '../../stores/authStore';
+import { useContentStore } from '../../stores/contentStore';
 
 // Top Bar Styles
 const TopBar = styled.div`
@@ -473,6 +474,7 @@ export const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { contactInfo, settings } = useContentStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -507,28 +509,38 @@ export const Header = () => {
           <TopBarRight>
             <TopBarContact>
               <Phone size={14} />
-              <a href="tel:+251123456789">+251 123 456 789</a>
+              <a href={`tel:${contactInfo.phone}`}>{contactInfo.phone}</a>
             </TopBarContact>
             <TopBarContact>
               <Mail size={14} />
-              <a href="mailto:info@gsts.org">info@gsts.org</a>
+              <a href={`mailto:${contactInfo.email}`}>{contactInfo.email}</a>
             </TopBarContact>
             <SocialLinks>
-              <SocialLink href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                <Facebook size={14} />
-              </SocialLink>
-              <SocialLink href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                <Twitter size={14} />
-              </SocialLink>
-              <SocialLink href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-                <Linkedin size={14} />
-              </SocialLink>
-              <SocialLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                <Instagram size={14} />
-              </SocialLink>
-              <SocialLink href="https://youtube.com" target="_blank" rel="noopener noreferrer">
-                <Youtube size={14} />
-              </SocialLink>
+              {settings.social.facebook && (
+                <SocialLink href={settings.social.facebook} target="_blank" rel="noopener noreferrer">
+                  <Facebook size={14} />
+                </SocialLink>
+              )}
+              {settings.social.twitter && (
+                <SocialLink href={settings.social.twitter} target="_blank" rel="noopener noreferrer">
+                  <Twitter size={14} />
+                </SocialLink>
+              )}
+              {settings.social.linkedin && (
+                <SocialLink href={settings.social.linkedin} target="_blank" rel="noopener noreferrer">
+                  <Linkedin size={14} />
+                </SocialLink>
+              )}
+              {settings.social.instagram && (
+                <SocialLink href={settings.social.instagram} target="_blank" rel="noopener noreferrer">
+                  <Instagram size={14} />
+                </SocialLink>
+              )}
+              {settings.social.youtube && (
+                <SocialLink href={settings.social.youtube} target="_blank" rel="noopener noreferrer">
+                  <Youtube size={14} />
+                </SocialLink>
+              )}
             </SocialLinks>
           </TopBarRight>
         </TopBarContainer>

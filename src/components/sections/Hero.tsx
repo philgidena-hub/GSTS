@@ -10,6 +10,7 @@ import {
   Users,
   Play,
 } from 'lucide-react';
+import { useContentStore } from '../../stores/contentStore';
 
 // Animations
 const fadeUp = keyframes`
@@ -424,12 +425,13 @@ const cardVariants = {
 
 export const Hero = () => {
   const navigate = useNavigate();
+  const { hero } = useContentStore();
 
   return (
     <>
       <HeroSection>
         <HeroBackground>
-          <img src="/images/Hero_Image.jpg" alt="GSTS Community" />
+          <img src={hero.backgroundImage || "/images/Hero_Image.jpg"} alt="GSTS Community" />
         </HeroBackground>
         <HeroOverlay />
 
@@ -440,8 +442,8 @@ export const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              Global Society of Tigray
-              <span className="highlight">Scholars and Professionals</span>
+              {hero.title || 'Global Society of Tigray'}
+              <span className="highlight">{hero.subtitle || 'Scholars and Professionals'}</span>
             </HeroTitle>
 
             <HeroSubtitle
@@ -449,9 +451,7 @@ export const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              A global knowledge network of academics, professionals, and intellectuals
-              dedicated to leveraging expertise for the reconstruction and sustainable
-              development of Tigray.
+              {hero.description || 'A global knowledge network of academics, professionals, and intellectuals dedicated to leveraging expertise for the reconstruction and sustainable development of Tigray.'}
             </HeroSubtitle>
 
             <HeroActions
@@ -459,15 +459,15 @@ export const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <PrimaryButton onClick={() => navigate('/membership')}>
-                Join GSTS
+              <PrimaryButton onClick={() => navigate(hero.primaryButtonLink || '/membership')}>
+                {hero.primaryButtonText || 'Join GSTS'}
                 <ArrowRight size={18} />
               </PrimaryButton>
-              <SecondaryButton onClick={() => navigate('/about')}>
+              <SecondaryButton onClick={() => navigate(hero.secondaryButtonLink || '/about')}>
                 <PlayIcon>
                   <Play size={16} fill="white" />
                 </PlayIcon>
-                Watch Video
+                {hero.secondaryButtonText || 'Watch Video'}
               </SecondaryButton>
             </HeroActions>
           </HeroContent>

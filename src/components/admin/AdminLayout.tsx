@@ -352,7 +352,7 @@ export const AdminLayout = () => {
       <Sidebar $isOpen={isSidebarOpen}>
         <SidebarHeader>
           <Logo to="/">
-            <LogoImage src="/images/logo.png" alt="GSTS Logo" />
+            <LogoImage src="/images/logo-gsts.png" alt="GSTS Logo" />
             <LogoText>GSTS</LogoText>
           </Logo>
         </SidebarHeader>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useContentStore } from '../../stores/contentStore';
 
 const FooterWrapper = styled.footer`
   background: linear-gradient(180deg, var(--color-neutral-900) 0%, var(--color-neutral-950) 100%);
@@ -394,6 +395,8 @@ const statsData = [
 ];
 
 export const Footer = () => {
+  const { contactInfo, settings } = useContentStore();
+
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle newsletter subscription
@@ -404,33 +407,41 @@ export const Footer = () => {
       <ContactBar>
         <ContactBarContent>
           <ContactBarItems>
-            <ContactBarItem href="tel:+251123456789">
+            <ContactBarItem href={`tel:${contactInfo.phone}`}>
               <Phone size={16} />
-              <span>+251 123 456 789</span>
+              <span>{contactInfo.phone}</span>
             </ContactBarItem>
-            <ContactBarItem href="mailto:info@gsts.org">
+            <ContactBarItem href={`mailto:${contactInfo.email}`}>
               <Mail size={16} />
-              <span>info@gsts.org</span>
+              <span>{contactInfo.email}</span>
             </ContactBarItem>
             <ContactBarItem href="#">
               <MapPin size={16} />
-              <span>Mekelle, Tigray, Ethiopia</span>
+              <span>{contactInfo.city}, {contactInfo.country}</span>
             </ContactBarItem>
           </ContactBarItems>
           <ContactBarActions>
             <BarSocialLinks>
-              <BarSocialLink href="https://facebook.com" target="_blank" aria-label="Facebook">
-                <Facebook size={16} />
-              </BarSocialLink>
-              <BarSocialLink href="https://twitter.com" target="_blank" aria-label="Twitter">
-                <Twitter size={16} />
-              </BarSocialLink>
-              <BarSocialLink href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
-                <Linkedin size={16} />
-              </BarSocialLink>
-              <BarSocialLink href="https://youtube.com" target="_blank" aria-label="YouTube">
-                <Youtube size={16} />
-              </BarSocialLink>
+              {settings.social.facebook && (
+                <BarSocialLink href={settings.social.facebook} target="_blank" aria-label="Facebook">
+                  <Facebook size={16} />
+                </BarSocialLink>
+              )}
+              {settings.social.twitter && (
+                <BarSocialLink href={settings.social.twitter} target="_blank" aria-label="Twitter">
+                  <Twitter size={16} />
+                </BarSocialLink>
+              )}
+              {settings.social.linkedin && (
+                <BarSocialLink href={settings.social.linkedin} target="_blank" aria-label="LinkedIn">
+                  <Linkedin size={16} />
+                </BarSocialLink>
+              )}
+              {settings.social.youtube && (
+                <BarSocialLink href={settings.social.youtube} target="_blank" aria-label="YouTube">
+                  <Youtube size={16} />
+                </BarSocialLink>
+              )}
             </BarSocialLinks>
           </ContactBarActions>
         </ContactBarContent>
@@ -449,21 +460,31 @@ export const Footer = () => {
               reconstruction.
             </FooterDescription>
             <SocialLinks>
-              <SocialLink href="https://facebook.com" target="_blank" aria-label="Facebook">
-                <Facebook size={20} />
-              </SocialLink>
-              <SocialLink href="https://twitter.com" target="_blank" aria-label="Twitter">
-                <Twitter size={20} />
-              </SocialLink>
-              <SocialLink href="https://instagram.com" target="_blank" aria-label="Instagram">
-                <Instagram size={20} />
-              </SocialLink>
-              <SocialLink href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
-                <Linkedin size={20} />
-              </SocialLink>
-              <SocialLink href="https://youtube.com" target="_blank" aria-label="YouTube">
-                <Youtube size={20} />
-              </SocialLink>
+              {settings.social.facebook && (
+                <SocialLink href={settings.social.facebook} target="_blank" aria-label="Facebook">
+                  <Facebook size={20} />
+                </SocialLink>
+              )}
+              {settings.social.twitter && (
+                <SocialLink href={settings.social.twitter} target="_blank" aria-label="Twitter">
+                  <Twitter size={20} />
+                </SocialLink>
+              )}
+              {settings.social.instagram && (
+                <SocialLink href={settings.social.instagram} target="_blank" aria-label="Instagram">
+                  <Instagram size={20} />
+                </SocialLink>
+              )}
+              {settings.social.linkedin && (
+                <SocialLink href={settings.social.linkedin} target="_blank" aria-label="LinkedIn">
+                  <Linkedin size={20} />
+                </SocialLink>
+              )}
+              {settings.social.youtube && (
+                <SocialLink href={settings.social.youtube} target="_blank" aria-label="YouTube">
+                  <Youtube size={20} />
+                </SocialLink>
+              )}
             </SocialLinks>
           </FooterColumn>
 
@@ -523,8 +544,8 @@ export const Footer = () => {
               </ContactIcon>
               <ContactText>
                 <strong>Address</strong>
-                Mekelle, Tigray<br />
-                Ethiopia
+                {contactInfo.address}<br />
+                {contactInfo.city}, {contactInfo.country}
               </ContactText>
             </ContactItem>
             <ContactItem>
@@ -533,7 +554,7 @@ export const Footer = () => {
               </ContactIcon>
               <ContactText>
                 <strong>Email</strong>
-                info@gsts.org
+                {contactInfo.email}
               </ContactText>
             </ContactItem>
             <ContactItem>
@@ -542,7 +563,7 @@ export const Footer = () => {
               </ContactIcon>
               <ContactText>
                 <strong>Phone</strong>
-                +251 123 456 789
+                {contactInfo.phone}
               </ContactText>
             </ContactItem>
 

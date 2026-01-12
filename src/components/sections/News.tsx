@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useContentStore } from '../../stores/contentStore';
 
 const NewsSection = styled.section`
   padding: 5rem 0;
@@ -201,43 +202,18 @@ const ReadMore = styled.div`
   }
 `;
 
-// Sample blog posts data
-const blogPosts = [
-  {
-    id: '1',
-    title: 'GSTS Annual Conference 2024: Building Back Better',
-    excerpt: 'Join us for our flagship annual conference where scholars and professionals gather to discuss strategies for sustainable development.',
-    image: '/images/photo_9_2026-01-12_07-13-36.jpg',
-    category: 'Events',
-    date: '2024-08-15',
-    slug: 'annual-conference-2024'
-  },
-  {
-    id: '2',
-    title: 'Research Collaboration Initiative Launch',
-    excerpt: 'New partnership program connecting researchers across continents for impactful collaborative projects.',
-    image: '/images/photo_10_2026-01-12_07-13-36.jpg',
-    category: 'Research',
-    date: '2024-08-10',
-    slug: 'research-collaboration'
-  },
-  {
-    id: '3',
-    title: 'Youth Empowerment Workshop Success',
-    excerpt: 'Over 500 young professionals participated in our comprehensive career development series.',
-    image: '/images/photo_11_2026-01-12_07-13-36.jpg',
-    category: 'Education',
-    date: '2024-08-05',
-    slug: 'youth-workshop'
-  }
-];
-
 export const News = () => {
   const navigate = useNavigate();
+  const { blogPosts } = useContentStore();
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  // Get the 3 most recent blog posts
+  const recentPosts = [...blogPosts]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -262,7 +238,7 @@ export const News = () => {
         </SectionHeader>
 
         <NewsGrid>
-          {blogPosts.map((post, index) => (
+          {recentPosts.map((post, index) => (
             <NewsCard
               key={post.id}
               initial={{ opacity: 0, y: 30 }}

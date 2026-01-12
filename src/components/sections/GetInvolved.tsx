@@ -27,9 +27,9 @@ const BackgroundImage = styled.div`
     inset: 0;
     background: linear-gradient(
       135deg,
-      rgba(0, 41, 102, 0.92) 0%,
-      rgba(0, 61, 153, 0.88) 50%,
-      rgba(0, 82, 204, 0.85) 100%
+      rgba(0, 41, 102, 0.75) 0%,
+      rgba(0, 61, 153, 0.70) 50%,
+      rgba(0, 82, 204, 0.65) 100%
     );
     z-index: 1;
   }

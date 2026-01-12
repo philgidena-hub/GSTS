@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { Layout } from './components/layout';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { Home, Membership, Login, About, Services, Contact, News, Projects } from './pages';
@@ -16,6 +17,8 @@ import {
 } from './pages/admin';
 import { SetupAdmin } from './pages/admin/SetupAdmin';
 import { useAuthStore } from './stores/authStore';
+import { CustomCursor } from './components/cursor';
+import { PageTransition } from './components/transitions';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -41,6 +44,130 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return <>{children}</>;
+};
+
+// Animated Routes component
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <PageTransition>
+                <Home />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/membership"
+          element={
+            <Layout>
+              <PageTransition>
+                <Membership />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <Layout>
+              <PageTransition>
+                <About />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <Layout>
+              <PageTransition>
+                <Services />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <Layout>
+              <PageTransition>
+                <Projects />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/news"
+          element={
+            <Layout>
+              <PageTransition>
+                <News />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <Layout>
+              <PageTransition>
+                <Contact />
+              </PageTransition>
+            </Layout>
+          }
+        />
+
+        {/* Auth Routes */}
+        <Route
+          path="/login"
+          element={
+            <AuthRoute>
+              <PageTransition>
+                <Login />
+              </PageTransition>
+            </AuthRoute>
+          }
+        />
+
+        {/* Admin Setup (one-time use) */}
+        <Route path="/setup-admin" element={<SetupAdmin />} />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="hero" element={<HeroEditor />} />
+          <Route path="applications" element={<ApplicationsManager />} />
+          <Route path="about" element={<HeroEditor />} />
+          <Route path="services" element={<HeroEditor />} />
+          <Route path="projects" element={<ProjectsManager />} />
+          <Route path="blog" element={<BlogManager />} />
+          <Route path="team" element={<TeamManager />} />
+          <Route path="members" element={<MembersManager />} />
+          <Route path="messages" element={<MessagesManager />} />
+          <Route path="settings" element={<SiteSettings />} />
+          <Route path="analytics" element={<Dashboard />} />
+        </Route>
+
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
 };
 
 function App() {
@@ -77,104 +204,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
-        <Route
-          path="/membership"
-          element={
-            <Layout>
-              <Membership />
-            </Layout>
-          }
-        />
-        <Route
-          path="/about"
-          element={
-            <Layout>
-              <About />
-            </Layout>
-          }
-        />
-        <Route
-          path="/services"
-          element={
-            <Layout>
-              <Services />
-            </Layout>
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            <Layout>
-              <Projects />
-            </Layout>
-          }
-        />
-        <Route
-          path="/news"
-          element={
-            <Layout>
-              <News />
-            </Layout>
-          }
-        />
-        <Route
-          path="/contact"
-          element={
-            <Layout>
-              <Contact />
-            </Layout>
-          }
-        />
-
-        {/* Auth Routes */}
-        <Route
-          path="/login"
-          element={
-            <AuthRoute>
-              <Login />
-            </AuthRoute>
-          }
-        />
-
-        {/* Admin Setup (one-time use) */}
-        <Route path="/setup-admin" element={<SetupAdmin />} />
-
-        {/* Admin Routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="hero" element={<HeroEditor />} />
-          <Route path="applications" element={<ApplicationsManager />} />
-          <Route path="about" element={<HeroEditor />} />
-          <Route path="services" element={<HeroEditor />} />
-          <Route path="projects" element={<ProjectsManager />} />
-          <Route path="blog" element={<BlogManager />} />
-          <Route path="team" element={<TeamManager />} />
-          <Route path="members" element={<MembersManager />} />
-          <Route path="messages" element={<MessagesManager />} />
-          <Route path="settings" element={<SiteSettings />} />
-          <Route path="analytics" element={<Dashboard />} />
-        </Route>
-
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <CustomCursor />
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 }

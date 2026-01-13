@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import {
@@ -10,10 +11,13 @@ import {
   Phone,
   MapPin,
   ArrowRight,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useContentStore } from '../../stores/contentStore';
+import { membershipService } from '../../services/membership.service';
 
 const FooterWrapper = styled.footer`
   background: linear-gradient(180deg, var(--color-neutral-900) 0%, var(--color-neutral-950) 100%);
@@ -332,12 +336,55 @@ const DesignedBy = styled.p`
   }
 `;
 
+const SuccessMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  color: #10b981;
+  font-size: 0.875rem;
+`;
+
+const ErrorMessage = styled.div`
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #ef4444;
+  font-size: 0.875rem;
+`;
+
 export const Footer = () => {
   const { contactInfo, settings } = useContentStore();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle newsletter subscription
+
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await membershipService.subscribeNewsletter(email);
+      setIsSubscribed(true);
+      setEmail('');
+    } catch (err: any) {
+      console.error('Newsletter subscription failed:', err);
+      setError(err.message || 'Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -510,16 +557,31 @@ export const Footer = () => {
               <NewsletterDescription>
                 Stay updated with our latest news and events.
               </NewsletterDescription>
-              <NewsletterForm onSubmit={handleNewsletterSubmit}>
-                <Input
-                  type="email"
-                  placeholder="Your email"
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none' }}
-                />
-                <Button type="submit" variant="secondary" size="sm">
-                  <ArrowRight size={18} />
-                </Button>
-              </NewsletterForm>
+              {isSubscribed ? (
+                <SuccessMessage>
+                  <Check size={16} />
+                  Thank you for subscribing!
+                </SuccessMessage>
+              ) : (
+                <>
+                  {error && <ErrorMessage>{error}</ErrorMessage>}
+                  <NewsletterForm onSubmit={handleNewsletterSubmit}>
+                    <Input
+                      type="email"
+                      placeholder="Your email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError(null);
+                      }}
+                      style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none' }}
+                    />
+                    <Button type="submit" variant="secondary" size="sm" disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+                    </Button>
+                  </NewsletterForm>
+                </>
+              )}
             </NewsletterSection>
           </FooterColumn>
         </FooterContent>

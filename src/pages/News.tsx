@@ -2,7 +2,8 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowRight, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useContentStore } from '../stores/contentStore';
 
 const PageHero = styled.section`
   padding: 10rem 0 5rem;
@@ -340,85 +341,29 @@ const FeaturedExcerpt = styled.p`
   margin-bottom: 1.5rem;
 `;
 
-const blogPosts = [
-  {
-    id: '1',
-    title: 'GSTS Annual Conference 2024: Building Back Better',
-    excerpt: 'Join us for our flagship annual conference where scholars and professionals gather to discuss strategies for sustainable development and reconstruction.',
-    image: '/images/photo_9_2026-01-12_07-13-36.jpg',
-    category: 'Events',
-    date: '2024-08-15',
-    author: 'GSTS Editorial',
-    readTime: '5 min',
-    slug: 'annual-conference-2024',
-    featured: true
-  },
-  {
-    id: '2',
-    title: 'Research Collaboration Initiative Launch',
-    excerpt: 'New partnership program connecting researchers across continents for impactful collaborative projects.',
-    image: '/images/photo_10_2026-01-12_07-13-36.jpg',
-    category: 'Research',
-    date: '2024-08-10',
-    author: 'Research Committee',
-    readTime: '4 min',
-    slug: 'research-collaboration'
-  },
-  {
-    id: '3',
-    title: 'Youth Empowerment Workshop Success',
-    excerpt: 'Over 500 young professionals participated in our comprehensive career development series.',
-    image: '/images/photo_11_2026-01-12_07-13-36.jpg',
-    category: 'Education',
-    date: '2024-08-05',
-    author: 'Youth Affairs',
-    readTime: '3 min',
-    slug: 'youth-workshop'
-  },
-  {
-    id: '4',
-    title: 'Healthcare Infrastructure Report Published',
-    excerpt: 'Comprehensive analysis of healthcare needs and development priorities for the region.',
-    image: '/images/photo_3_2026-01-12_07-13-36.jpg',
-    category: 'Healthcare',
-    date: '2024-07-28',
-    author: 'Health Cluster',
-    readTime: '6 min',
-    slug: 'healthcare-report'
-  },
-  {
-    id: '5',
-    title: 'New Membership Portal Launched',
-    excerpt: 'Enhanced digital platform for member engagement and collaboration.',
-    image: '/images/photo_4_2026-01-12_07-13-36.jpg',
-    category: 'Announcements',
-    date: '2024-07-20',
-    author: 'Tech Team',
-    readTime: '2 min',
-    slug: 'membership-portal'
-  },
-  {
-    id: '6',
-    title: 'Economic Development Summit Highlights',
-    excerpt: 'Key takeaways from the recent summit on sustainable economic development strategies.',
-    image: '/images/photo_5_2026-01-12_07-13-36.jpg',
-    category: 'Events',
-    date: '2024-07-15',
-    author: 'Economics Cluster',
-    readTime: '4 min',
-    slug: 'economic-summit'
-  }
-];
-
-const categories = ['All', 'Events', 'Research', 'Education', 'Healthcare', 'Announcements'];
-
 export const News = () => {
   const navigate = useNavigate();
+  const { blogPosts } = useContentStore();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const featuredPost = blogPosts.find(post => post.featured);
-  const otherPosts = blogPosts.filter(post => !post.featured);
+  // Get unique categories from blog posts
+  const categories = useMemo(() => {
+    const uniqueCategories = [...new Set(blogPosts.map(post => post.category))];
+    return ['All', ...uniqueCategories];
+  }, [blogPosts]);
+
+  // Get featured post (first post or most recent)
+  const featuredPost = blogPosts[0];
+  const otherPosts = blogPosts.slice(1);
+
+  // Calculate read time based on content length
+  const calculateReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const words = (content || '').split(/\s+/).length;
+    const minutes = Math.max(1, Math.ceil(words / wordsPerMinute));
+    return `${minutes} min`;
+  };
 
   const filteredPosts = otherPosts.filter(post => {
     const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
@@ -473,7 +418,7 @@ export const News = () => {
                   </MetaItem>
                   <MetaItem>
                     <Clock size={14} />
-                    {featuredPost.readTime} read
+                    {calculateReadTime(featuredPost.content || featuredPost.excerpt)} read
                   </MetaItem>
                 </NewsMeta>
                 <FeaturedTitle>{featuredPost.title}</FeaturedTitle>
@@ -529,7 +474,7 @@ export const News = () => {
                     </MetaItem>
                     <MetaItem>
                       <Clock size={12} />
-                      {post.readTime}
+                      {calculateReadTime(post.content || post.excerpt)}
                     </MetaItem>
                   </NewsMeta>
                   <NewsTitle>{post.title}</NewsTitle>

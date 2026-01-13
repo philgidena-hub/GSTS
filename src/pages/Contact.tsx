@@ -12,7 +12,10 @@ import {
   Twitter,
   Linkedin,
   Instagram,
+  AlertCircle,
 } from 'lucide-react';
+import { membershipService } from '../services/membership.service';
+import { useContentStore } from '../stores/contentStore';
 
 const PageHero = styled.section`
   padding: 10rem 0 5rem;
@@ -347,6 +350,33 @@ const SuccessText = styled.p`
   line-height: 1.6;
 `;
 
+const ErrorMessage = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  margin-bottom: 1rem;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 // Map Section
 const MapSection = styled.section`
   padding: 0 0 5rem;
@@ -378,34 +408,9 @@ const MapPlaceholder = styled.div`
   }
 `;
 
-const contactItems = [
-  {
-    icon: Phone,
-    label: 'Phone',
-    value: '+251 123 456 789',
-    color: '#10b981',
-  },
-  {
-    icon: Mail,
-    label: 'Email',
-    value: 'info@gsts.org',
-    color: '#0052cc',
-  },
-  {
-    icon: MapPin,
-    label: 'Address',
-    value: 'Mekelle, Tigray, Ethiopia',
-    color: '#ef4444',
-  },
-  {
-    icon: Clock,
-    label: 'Working Hours',
-    value: 'Mon - Fri: 9:00 AM - 6:00 PM',
-    color: '#d4a012',
-  },
-];
-
 export const Contact = () => {
+  const { contactInfo, settings } = useContentStore();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -416,15 +421,72 @@ export const Contact = () => {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Build contact items from store data
+  const contactItems = [
+    {
+      icon: Phone,
+      label: 'Phone',
+      value: contactInfo.phone,
+      color: '#10b981',
+    },
+    {
+      icon: Mail,
+      label: 'Email',
+      value: contactInfo.email,
+      color: '#0052cc',
+    },
+    {
+      icon: MapPin,
+      label: 'Address',
+      value: `${contactInfo.city}, ${contactInfo.country}`,
+      color: '#ef4444',
+    },
+    {
+      icon: Clock,
+      label: 'Working Hours',
+      value: contactInfo.workingHours,
+      color: '#d4a012',
+    },
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await membershipService.submitContactForm({
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        subject: formData.subject,
+        message: formData.message,
+      });
+      setIsSubmitted(true);
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+    } catch (err: any) {
+      console.error('Failed to submit contact form:', err);
+      setError(err.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -472,18 +534,26 @@ export const Contact = () => {
 
               <SectionLabel>Follow Us</SectionLabel>
               <SocialLinks>
-                <SocialLink href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                  <Facebook size={20} />
-                </SocialLink>
-                <SocialLink href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                  <Twitter size={20} />
-                </SocialLink>
-                <SocialLink href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-                  <Linkedin size={20} />
-                </SocialLink>
-                <SocialLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                  <Instagram size={20} />
-                </SocialLink>
+                {settings.social.facebook && (
+                  <SocialLink href={settings.social.facebook} target="_blank" rel="noopener noreferrer">
+                    <Facebook size={20} />
+                  </SocialLink>
+                )}
+                {settings.social.twitter && (
+                  <SocialLink href={settings.social.twitter} target="_blank" rel="noopener noreferrer">
+                    <Twitter size={20} />
+                  </SocialLink>
+                )}
+                {settings.social.linkedin && (
+                  <SocialLink href={settings.social.linkedin} target="_blank" rel="noopener noreferrer">
+                    <Linkedin size={20} />
+                  </SocialLink>
+                )}
+                {settings.social.instagram && (
+                  <SocialLink href={settings.social.instagram} target="_blank" rel="noopener noreferrer">
+                    <Instagram size={20} />
+                  </SocialLink>
+                )}
               </SocialLinks>
             </ContactInfo>
 
@@ -516,6 +586,16 @@ export const Contact = () => {
                   <FormSubtitle>
                     Fill out the form below and we'll get back to you as soon as possible.
                   </FormSubtitle>
+
+                  {error && (
+                    <ErrorMessage
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <AlertCircle size={18} />
+                      {error}
+                    </ErrorMessage>
+                  )}
 
                   <Form onSubmit={handleSubmit}>
                     <FormRow>
@@ -595,9 +675,18 @@ export const Contact = () => {
                       />
                     </FormGroup>
 
-                    <SubmitButton type="submit">
-                      Send Message
-                      <Send size={16} />
+                    <SubmitButton type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <LoadingSpinner />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <Send size={16} />
+                        </>
+                      )}
                     </SubmitButton>
                   </Form>
                 </>

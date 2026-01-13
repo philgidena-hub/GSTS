@@ -337,10 +337,7 @@ export const TeamManager = () => {
     if (editingMember) {
       updateTeamMember(editingMember.id, formData);
     } else {
-      addTeamMember({
-        ...formData,
-        id: `team-${Date.now()}`,
-      });
+      addTeamMember(formData);
     }
 
     setIsSaving(false);

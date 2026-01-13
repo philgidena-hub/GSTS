@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Plus, Edit2, Trash2, Save, X, Search, Calendar } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search, Calendar, Upload, Eye, Image } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -123,7 +123,7 @@ const PostActions = styled.div`
   gap: 0.5rem;
 `;
 
-const ActionButton = styled.button<{ $variant?: 'danger' }>`
+const ActionButton = styled.button<{ $variant?: 'danger' | 'primary' }>`
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -135,13 +135,15 @@ const ActionButton = styled.button<{ $variant?: 'danger' }>`
   cursor: pointer;
   transition: all 0.2s;
   background: ${({ $variant }) =>
-    $variant === 'danger' ? 'var(--color-accent-error)' : 'var(--color-neutral-100)'};
+    $variant === 'danger' ? 'var(--color-accent-error)' :
+    $variant === 'primary' ? 'var(--color-primary-600)' : 'var(--color-neutral-100)'};
   color: ${({ $variant }) =>
-    $variant === 'danger' ? 'white' : 'var(--color-neutral-700)'};
+    $variant === 'danger' || $variant === 'primary' ? 'white' : 'var(--color-neutral-700)'};
 
   &:hover {
     background: ${({ $variant }) =>
-      $variant === 'danger' ? '#dc2626' : 'var(--color-neutral-200)'};
+      $variant === 'danger' ? '#dc2626' :
+      $variant === 'primary' ? 'var(--color-primary-700)' : 'var(--color-neutral-200)'};
   }
 `;
 
@@ -161,7 +163,7 @@ const ModalContent = styled.div`
   background: white;
   border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 700px;
+  max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
 `;
@@ -243,6 +245,94 @@ const EmptyText = styled.p`
   margin-bottom: 1.5rem;
 `;
 
+const ImageUploadArea = styled.div<{ $hasImage: boolean }>`
+  border: 2px dashed ${({ $hasImage }) => $hasImage ? 'var(--color-primary-300)' : 'var(--color-neutral-200)'};
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: ${({ $hasImage }) => $hasImage ? 'var(--color-primary-50)' : 'var(--color-neutral-50)'};
+
+  &:hover {
+    border-color: var(--color-primary-400);
+    background: var(--color-primary-50);
+  }
+`;
+
+const ImagePreview = styled.div`
+  position: relative;
+  margin-top: 1rem;
+
+  img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+  }
+
+  button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-accent-error);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: #dc2626;
+    }
+  }
+`;
+
+const UploadIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background: var(--color-primary-100);
+  color: var(--color-primary-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UploadText = styled.p`
+  font-size: 0.875rem;
+  color: var(--color-neutral-600);
+  margin-bottom: 0.25rem;
+`;
+
+const UploadHint = styled.p`
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
+`;
+
+const ErrorMessage = styled.div`
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  color: #dc2626;
+  font-size: 0.875rem;
+`;
+
+const SuccessMessage = styled.div`
+  padding: 0.75rem 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  color: #16a34a;
+  font-size: 0.875rem;
+`;
+
 interface BlogFormData {
   title: string;
   excerpt: string;
@@ -268,12 +358,16 @@ const initialFormData: BlogFormData = {
 };
 
 export const BlogManager = () => {
-  const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost } = useContentStore();
+  const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost, uploadFile, isLoading, error } = useContentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState<BlogFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const authorImageInputRef = useRef<HTMLInputElement>(null);
 
   const filteredPosts = blogPosts.filter(
     (p) =>
@@ -300,6 +394,7 @@ export const BlogManager = () => {
       setEditingPost(null);
       setFormData(initialFormData);
     }
+    setSuccessMessage('');
     setIsModalOpen(true);
   };
 
@@ -307,6 +402,7 @@ export const BlogManager = () => {
     setIsModalOpen(false);
     setEditingPost(null);
     setFormData(initialFormData);
+    setSuccessMessage('');
   };
 
   const handleChange = (
@@ -322,27 +418,75 @@ export const BlogManager = () => {
     }));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'authorImage') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (editingPost) {
-      updateBlogPost(editingPost.id, formData);
-    } else {
-      addBlogPost({
-        ...formData,
-        id: `blog-${Date.now()}`,
-      });
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
     }
 
-    setIsSaving(false);
-    handleCloseModal();
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const path = `blog/${field}/${Date.now()}_${file.name}`;
+      const url = await uploadFile(file, path);
+      setFormData((prev) => ({ ...prev, [field]: url }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      deleteBlogPost(id);
+  const handleSave = async () => {
+    // Validate required fields
+    if (!formData.title || !formData.excerpt || !formData.author || !formData.category) {
+      alert('Please fill in all required fields');
+      return;
     }
+
+    setIsSaving(true);
+    try {
+      if (editingPost) {
+        await updateBlogPost(editingPost.id, formData);
+        setSuccessMessage('Blog post updated successfully!');
+      } else {
+        await addBlogPost(formData);
+        setSuccessMessage('Blog post created successfully!');
+      }
+
+      // Close modal after a short delay to show success message
+      setTimeout(() => {
+        handleCloseModal();
+      }, 1500);
+    } catch (error) {
+      console.error('Save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      try {
+        await deleteBlogPost(id);
+      } catch (error) {
+        console.error('Delete failed:', error);
+      }
+    }
+  };
+
+  const handlePreview = (slug: string) => {
+    window.open(`/news/${slug}`, '_blank');
   };
 
   const formatDate = (dateString: string) => {
@@ -373,6 +517,8 @@ export const BlogManager = () => {
         </div>
       </Header>
 
+      {error && <ErrorMessage>{error}</ErrorMessage>}
+
       {filteredPosts.length === 0 ? (
         <EmptyState>
           <EmptyTitle>No blog posts found</EmptyTitle>
@@ -396,7 +542,7 @@ export const BlogManager = () => {
                   <img src={post.image} alt={post.title} />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-neutral-400)' }}>
-                    No image
+                    <Image size={48} />
                   </div>
                 )}
                 <CategoryBadge>{post.category}</CategoryBadge>
@@ -412,6 +558,10 @@ export const BlogManager = () => {
                 <PostTitle>{post.title}</PostTitle>
                 <PostExcerpt>{post.excerpt}</PostExcerpt>
                 <PostActions>
+                  <ActionButton $variant="primary" onClick={() => handlePreview(post.slug)}>
+                    <Eye size={14} />
+                    View
+                  </ActionButton>
                   <ActionButton onClick={() => handleOpenModal(post)}>
                     <Edit2 size={14} />
                     Edit
@@ -437,8 +587,10 @@ export const BlogManager = () => {
               </CloseButton>
             </ModalHeader>
             <ModalBody>
+              {successMessage && <SuccessMessage>{successMessage}</SuccessMessage>}
+
               <Input
-                label="Post Title"
+                label="Post Title *"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
@@ -454,11 +606,11 @@ export const BlogManager = () => {
                 fullWidth
               />
               <Textarea
-                label="Excerpt"
+                label="Excerpt *"
                 name="excerpt"
                 value={formData.excerpt}
                 onChange={handleChange}
-                placeholder="Brief summary of the post..."
+                placeholder="Brief summary of the post (displayed in listings)..."
                 fullWidth
               />
               <Textarea
@@ -466,13 +618,13 @@ export const BlogManager = () => {
                 name="content"
                 value={formData.content}
                 onChange={handleChange}
-                placeholder="Full post content..."
+                placeholder="Full post content (supports markdown-like formatting)..."
                 fullWidth
-                style={{ minHeight: '150px' }}
+                style={{ minHeight: '200px' }}
               />
               <FormRow>
                 <Input
-                  label="Author Name"
+                  label="Author Name *"
                   name="author"
                   value={formData.author}
                   onChange={handleChange}
@@ -480,7 +632,7 @@ export const BlogManager = () => {
                   fullWidth
                 />
                 <Input
-                  label="Category"
+                  label="Category *"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
@@ -497,23 +649,83 @@ export const BlogManager = () => {
                   onChange={handleChange}
                   fullWidth
                 />
-                <Input
-                  label="Author Image URL"
-                  name="authorImage"
-                  value={formData.authorImage}
-                  onChange={handleChange}
-                  placeholder="/images/author.jpg"
-                  fullWidth
-                />
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Author Image
+                  </label>
+                  <input
+                    ref={authorImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => handleImageUpload(e, 'authorImage')}
+                  />
+                  {formData.authorImage ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <img
+                        src={formData.authorImage}
+                        alt="Author"
+                        style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => authorImageInputRef.current?.click()}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => authorImageInputRef.current?.click()}
+                      isLoading={uploadingImage}
+                    >
+                      <Upload size={14} /> Upload Image
+                    </Button>
+                  )}
+                </div>
               </FormRow>
-              <Input
-                label="Featured Image URL"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/blog-image.jpg"
-                fullWidth
-              />
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  Featured Image
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleImageUpload(e, 'image')}
+                />
+                <ImageUploadArea
+                  $hasImage={!!formData.image}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {formData.image ? (
+                    <ImagePreview>
+                      <img src={formData.image} alt="Featured" />
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({ ...prev, image: '' }));
+                      }}>
+                        <X size={14} />
+                      </button>
+                    </ImagePreview>
+                  ) : (
+                    <>
+                      <UploadIcon>
+                        <Upload size={24} />
+                      </UploadIcon>
+                      <UploadText>
+                        {uploadingImage ? 'Uploading...' : 'Click to upload featured image'}
+                      </UploadText>
+                      <UploadHint>PNG, JPG up to 5MB</UploadHint>
+                    </>
+                  )}
+                </ImageUploadArea>
+              </div>
             </ModalBody>
             <ModalFooter>
               <Button variant="ghost" onClick={handleCloseModal}>
@@ -523,7 +735,7 @@ export const BlogManager = () => {
                 variant="primary"
                 leftIcon={<Save size={18} />}
                 onClick={handleSave}
-                isLoading={isSaving}
+                isLoading={isSaving || isLoading}
               >
                 {editingPost ? 'Save Changes' : 'Publish Post'}
               </Button>

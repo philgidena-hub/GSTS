@@ -100,7 +100,7 @@ const PreviewTitle = styled.h2`
 const PreviewDescription = styled.p`
   font-size: 1rem;
   line-height: 1.6;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 1.5rem;
 `;
 

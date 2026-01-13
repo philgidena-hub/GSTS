@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { Search, Mail, Phone, Calendar, Trash2, Eye } from 'lucide-react';
+import { Search, Mail, Phone, Calendar, Trash2, Eye, RefreshCw, Inbox } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { membershipService } from '../../services/membership.service';
 
 const PageWrapper = styled.div``;
 
@@ -18,6 +19,12 @@ const Title = styled.h1`
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--color-neutral-900);
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 `;
 
 const SearchBox = styled.div`
@@ -146,6 +153,24 @@ const UnreadDot = styled.span`
   margin-right: 0.5rem;
 `;
 
+const StatusBadge = styled.span<{ $status: string }>`
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  margin-left: 0.5rem;
+  background: ${({ $status }) =>
+    $status === 'new' ? 'var(--color-accent-success)' :
+    $status === 'read' ? 'var(--color-neutral-200)' :
+    'var(--color-neutral-100)'};
+  color: ${({ $status }) =>
+    $status === 'new' ? 'white' :
+    $status === 'read' ? 'var(--color-neutral-600)' :
+    'var(--color-neutral-500)'};
+`;
+
 const MessageDetail = styled.div`
   background: white;
   border-radius: var(--radius-xl);
@@ -265,45 +290,62 @@ const EmptyText = styled.p`
   color: var(--color-neutral-500);
 `;
 
-// Sample messages data
-const sampleMessages = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '+1 234 567 890',
-    subject: 'Membership Inquiry',
-    message: 'Hello,\n\nI am interested in becoming a member of GSTS. Could you please provide more information about the membership process and benefits?\n\nI am currently working as a researcher at MIT and would love to contribute to the organization\'s mission.\n\nThank you for your time.\n\nBest regards,\nJohn',
-    date: '2024-01-15T10:30:00',
-    read: false,
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@company.com',
-    phone: '+1 987 654 321',
-    subject: 'Partnership Proposal',
-    message: 'Dear GSTS Team,\n\nI represent TechCorp and we are interested in exploring partnership opportunities with your organization.\n\nPlease let me know a convenient time to discuss this further.\n\nRegards,\nSarah',
-    date: '2024-01-14T15:45:00',
-    read: true,
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    email: 'michael.b@university.edu',
-    phone: '',
-    subject: 'Research Collaboration',
-    message: 'Hi,\n\nI am a professor at Stanford University and would like to discuss potential research collaboration opportunities.\n\nLooking forward to hearing from you.\n\nBest,\nMichael',
-    date: '2024-01-13T09:00:00',
-    read: true,
-  },
-];
+const LoadingState = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+`;
+
+const Spinner = styled.div`
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-neutral-200);
+  border-top-color: var(--color-primary-600);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  status: 'new' | 'read' | 'replied';
+  submittedAt: string;
+}
 
 export const MessagesManager = () => {
-  const [messages, setMessages] = useState(sampleMessages);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
-  const [selectedMessage, setSelectedMessage] = useState<typeof sampleMessages[0] | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+
+  // Fetch messages from Firebase
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const data = await membershipService.getContactSubmissions();
+      setMessages(data as ContactMessage[]);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
   const filteredMessages = messages.filter((m) => {
     const matchesSearch =
@@ -311,11 +353,13 @@ export const MessagesManager = () => {
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.subject.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter =
-      filter === 'all' || (filter === 'unread' && !m.read) || (filter === 'read' && m.read);
+      filter === 'all' ||
+      (filter === 'new' && m.status === 'new') ||
+      (filter === 'read' && m.status !== 'new');
     return matchesSearch && matchesFilter;
   });
 
-  const unreadCount = messages.filter((m) => !m.read).length;
+  const newCount = messages.filter((m) => m.status === 'new').length;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -332,11 +376,12 @@ export const MessagesManager = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const handleSelectMessage = (message: typeof sampleMessages[0]) => {
+  const handleSelectMessage = (message: ContactMessage) => {
     setSelectedMessage(message);
-    if (!message.read) {
+    // Mark as read locally (in a real app, you'd also update this in Firebase)
+    if (message.status === 'new') {
       setMessages((prev) =>
-        prev.map((m) => (m.id === message.id ? { ...m, read: true } : m))
+        prev.map((m) => (m.id === message.id ? { ...m, status: 'read' as const } : m))
       );
     }
   };
@@ -344,9 +389,9 @@ export const MessagesManager = () => {
   const handleMarkUnread = () => {
     if (selectedMessage) {
       setMessages((prev) =>
-        prev.map((m) => (m.id === selectedMessage.id ? { ...m, read: false } : m))
+        prev.map((m) => (m.id === selectedMessage.id ? { ...m, status: 'new' as const } : m))
       );
-      setSelectedMessage({ ...selectedMessage, read: false });
+      setSelectedMessage({ ...selectedMessage, status: 'new' });
     }
   };
 
@@ -357,128 +402,157 @@ export const MessagesManager = () => {
     }
   };
 
+  const handleReplyEmail = () => {
+    if (selectedMessage) {
+      window.location.href = `mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`;
+    }
+  };
+
   return (
     <PageWrapper>
       <Header>
-        <Title>Contact Messages {unreadCount > 0 && `(${unreadCount} unread)`}</Title>
-        <SearchBox>
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Search messages..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </SearchBox>
+        <Title>Contact Messages {newCount > 0 && `(${newCount} new)`}</Title>
+        <HeaderActions>
+          <Button
+            variant="ghost"
+            leftIcon={<RefreshCw size={18} />}
+            onClick={fetchMessages}
+          >
+            Refresh
+          </Button>
+          <SearchBox>
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </SearchBox>
+        </HeaderActions>
       </Header>
 
       <FilterTabs>
         <FilterTab $active={filter === 'all'} onClick={() => setFilter('all')}>
           All Messages
         </FilterTab>
-        <FilterTab $active={filter === 'unread'} onClick={() => setFilter('unread')}>
-          Unread ({unreadCount})
+        <FilterTab $active={filter === 'new'} onClick={() => setFilter('new')}>
+          New ({newCount})
         </FilterTab>
         <FilterTab $active={filter === 'read'} onClick={() => setFilter('read')}>
           Read
         </FilterTab>
       </FilterTabs>
 
-      <MessagesContainer>
-        <MessagesList>
-          {filteredMessages.length === 0 ? (
-            <EmptyState>
-              <EmptyTitle>No messages</EmptyTitle>
-              <EmptyText>
-                {searchQuery || filter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'No contact messages yet'}
-              </EmptyText>
-            </EmptyState>
-          ) : (
-            filteredMessages.map((message) => (
-              <MessageItem
-                key={message.id}
-                $selected={selectedMessage?.id === message.id}
-                $unread={!message.read}
-                onClick={() => handleSelectMessage(message)}
-              >
-                <MessageHeader>
-                  <MessageSender $unread={!message.read}>
-                    {!message.read && <UnreadDot />}
-                    {message.name}
-                  </MessageSender>
-                  <MessageTime>{formatDate(message.date)}</MessageTime>
-                </MessageHeader>
-                <MessageSubject $unread={!message.read}>{message.subject}</MessageSubject>
-                <MessagePreview>{message.message.split('\n')[0]}</MessagePreview>
-              </MessageItem>
-            ))
-          )}
-        </MessagesList>
+      {isLoading ? (
+        <LoadingState>
+          <Spinner />
+        </LoadingState>
+      ) : (
+        <MessagesContainer>
+          <MessagesList>
+            {filteredMessages.length === 0 ? (
+              <EmptyState>
+                <EmptyIcon>
+                  <Inbox size={32} />
+                </EmptyIcon>
+                <EmptyTitle>No messages</EmptyTitle>
+                <EmptyText>
+                  {searchQuery || filter !== 'all'
+                    ? 'Try adjusting your filters'
+                    : 'No contact messages yet'}
+                </EmptyText>
+              </EmptyState>
+            ) : (
+              filteredMessages.map((message) => (
+                <MessageItem
+                  key={message.id}
+                  $selected={selectedMessage?.id === message.id}
+                  $unread={message.status === 'new'}
+                  onClick={() => handleSelectMessage(message)}
+                >
+                  <MessageHeader>
+                    <MessageSender $unread={message.status === 'new'}>
+                      {message.status === 'new' && <UnreadDot />}
+                      {message.name}
+                    </MessageSender>
+                    <MessageTime>{formatDate(message.submittedAt)}</MessageTime>
+                  </MessageHeader>
+                  <MessageSubject $unread={message.status === 'new'}>
+                    {message.subject}
+                    <StatusBadge $status={message.status}>
+                      {message.status}
+                    </StatusBadge>
+                  </MessageSubject>
+                  <MessagePreview>{message.message.split('\n')[0]}</MessagePreview>
+                </MessageItem>
+              ))
+            )}
+          </MessagesList>
 
-        <MessageDetail>
-          {selectedMessage ? (
-            <>
-              <MessageDetailHeader>
-                <MessageDetailTitle>{selectedMessage.subject}</MessageDetailTitle>
-                <SenderInfo>
-                  <SenderAvatar>
-                    {selectedMessage.name.split(' ').map((n) => n[0]).join('')}
-                  </SenderAvatar>
-                  <SenderDetails>
-                    <SenderName>{selectedMessage.name}</SenderName>
-                    <SenderContact>
-                      <ContactItem>
-                        <Mail size={14} />
-                        {selectedMessage.email}
-                      </ContactItem>
-                      {selectedMessage.phone && (
+          <MessageDetail>
+            {selectedMessage ? (
+              <>
+                <MessageDetailHeader>
+                  <MessageDetailTitle>{selectedMessage.subject}</MessageDetailTitle>
+                  <SenderInfo>
+                    <SenderAvatar>
+                      {selectedMessage.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
+                    </SenderAvatar>
+                    <SenderDetails>
+                      <SenderName>{selectedMessage.name}</SenderName>
+                      <SenderContact>
                         <ContactItem>
-                          <Phone size={14} />
-                          {selectedMessage.phone}
+                          <Mail size={14} />
+                          {selectedMessage.email}
                         </ContactItem>
-                      )}
-                      <ContactItem>
-                        <Calendar size={14} />
-                        {new Date(selectedMessage.date).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </ContactItem>
-                    </SenderContact>
-                  </SenderDetails>
-                </SenderInfo>
-              </MessageDetailHeader>
-              <MessageDetailBody>
-                <MessageContent>{selectedMessage.message}</MessageContent>
-              </MessageDetailBody>
-              <MessageDetailFooter>
-                <Button variant="primary" leftIcon={<Mail size={18} />}>
-                  Reply via Email
-                </Button>
-                <Button variant="ghost" leftIcon={<Eye size={18} />} onClick={handleMarkUnread}>
-                  Mark as Unread
-                </Button>
-                <Button variant="ghost" leftIcon={<Trash2 size={18} />} onClick={handleDelete} style={{ color: 'var(--color-accent-error)' }}>
-                  Delete
-                </Button>
-              </MessageDetailFooter>
-            </>
-          ) : (
-            <EmptyState>
-              <EmptyIcon>
-                <Mail size={32} />
-              </EmptyIcon>
-              <EmptyTitle>Select a message</EmptyTitle>
-              <EmptyText>Choose a message from the list to view its details</EmptyText>
-            </EmptyState>
-          )}
-        </MessageDetail>
-      </MessagesContainer>
+                        {selectedMessage.phone && (
+                          <ContactItem>
+                            <Phone size={14} />
+                            {selectedMessage.phone}
+                          </ContactItem>
+                        )}
+                        <ContactItem>
+                          <Calendar size={14} />
+                          {new Date(selectedMessage.submittedAt).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </ContactItem>
+                      </SenderContact>
+                    </SenderDetails>
+                  </SenderInfo>
+                </MessageDetailHeader>
+                <MessageDetailBody>
+                  <MessageContent>{selectedMessage.message}</MessageContent>
+                </MessageDetailBody>
+                <MessageDetailFooter>
+                  <Button variant="primary" leftIcon={<Mail size={18} />} onClick={handleReplyEmail}>
+                    Reply via Email
+                  </Button>
+                  <Button variant="ghost" leftIcon={<Eye size={18} />} onClick={handleMarkUnread}>
+                    Mark as Unread
+                  </Button>
+                  <Button variant="ghost" leftIcon={<Trash2 size={18} />} onClick={handleDelete} style={{ color: 'var(--color-accent-error)' }}>
+                    Delete
+                  </Button>
+                </MessageDetailFooter>
+              </>
+            ) : (
+              <EmptyState>
+                <EmptyIcon>
+                  <Mail size={32} />
+                </EmptyIcon>
+                <EmptyTitle>Select a message</EmptyTitle>
+                <EmptyText>Choose a message from the list to view its details</EmptyText>
+              </EmptyState>
+            )}
+          </MessageDetail>
+        </MessagesContainer>
+      )}
     </PageWrapper>
   );
 };

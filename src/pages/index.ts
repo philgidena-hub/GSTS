@@ -5,4 +5,5 @@ export { About } from './About';
 export { Services } from './Services';
 export { Contact } from './Contact';
 export { News } from './News';
+export { NewsDetail } from './NewsDetail';
 export { Projects } from './Projects';

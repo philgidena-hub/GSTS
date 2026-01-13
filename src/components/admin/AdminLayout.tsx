@@ -17,6 +17,8 @@ import {
   UserCheck,
   ClipboardList,
   BarChart3,
+  Layers,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -298,17 +300,19 @@ const navItems = [
     items: [
       { icon: Home, label: 'Hero Section', path: '/admin/hero' },
       { icon: FileText, label: 'About', path: '/admin/about' },
-      { icon: Briefcase, label: 'Services', path: '/admin/services' },
+      { icon: Layers, label: 'Thematic Areas', path: '/admin/thematic-areas' },
       { icon: ClipboardList, label: 'Projects', path: '/admin/projects' },
       { icon: Newspaper, label: 'Blog Posts', path: '/admin/blog' },
       { icon: Users, label: 'Team', path: '/admin/team' },
+      { icon: BarChart3, label: 'Statistics', path: '/admin/statistics' },
+      { icon: HelpCircle, label: 'FAQs', path: '/admin/faqs' },
     ],
   },
   {
     section: 'Membership',
     items: [
       { icon: UserCheck, label: 'Members', path: '/admin/members' },
-      { icon: ClipboardList, label: 'Applications', path: '/admin/applications' },
+      { icon: Briefcase, label: 'Applications', path: '/admin/applications' },
     ],
   },
   {

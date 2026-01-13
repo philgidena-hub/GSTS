@@ -3,10 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from './components/layout';
 import { AdminLayout } from './components/admin/AdminLayout';
-import { Home, Membership, Login, About, Services, Contact, News, Projects } from './pages';
+import { Home, Membership, Login, About, Services, Contact, News, NewsDetail, Projects } from './pages';
 import {
   Dashboard,
   HeroEditor,
+  AboutEditor,
   ApplicationsManager,
   ProjectsManager,
   BlogManager,
@@ -14,9 +15,13 @@ import {
   MembersManager,
   MessagesManager,
   SiteSettings,
+  ServicesManager,
+  StatisticsManager,
+  FAQManager,
 } from './pages/admin';
 import { SetupAdmin } from './pages/admin/SetupAdmin';
 import { useAuthStore } from './stores/authStore';
+import { useContentStore } from './stores/contentStore';
 import { CustomCursor } from './components/cursor';
 import { PageTransition } from './components/transitions';
 
@@ -115,6 +120,16 @@ const AnimatedRoutes = () => {
           }
         />
         <Route
+          path="/news/:slug"
+          element={
+            <Layout>
+              <PageTransition>
+                <NewsDetail />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
           path="/contact"
           element={
             <Layout>
@@ -152,14 +167,16 @@ const AnimatedRoutes = () => {
           <Route index element={<Dashboard />} />
           <Route path="hero" element={<HeroEditor />} />
           <Route path="applications" element={<ApplicationsManager />} />
-          <Route path="about" element={<HeroEditor />} />
-          <Route path="services" element={<HeroEditor />} />
+          <Route path="about" element={<AboutEditor />} />
+          <Route path="thematic-areas" element={<ServicesManager />} />
           <Route path="projects" element={<ProjectsManager />} />
           <Route path="blog" element={<BlogManager />} />
           <Route path="team" element={<TeamManager />} />
           <Route path="members" element={<MembersManager />} />
           <Route path="messages" element={<MessagesManager />} />
           <Route path="settings" element={<SiteSettings />} />
+          <Route path="statistics" element={<StatisticsManager />} />
+          <Route path="faqs" element={<FAQManager />} />
           <Route path="analytics" element={<Dashboard />} />
         </Route>
 
@@ -172,12 +189,18 @@ const AnimatedRoutes = () => {
 
 function App() {
   const { initializeAuth, isLoading } = useAuthStore();
+  const { initializeContent } = useContentStore();
 
   // Initialize Firebase auth listener on app startup
   useEffect(() => {
     const unsubscribe = initializeAuth();
     return () => unsubscribe();
   }, [initializeAuth]);
+
+  // Initialize content from Firebase
+  useEffect(() => {
+    initializeContent();
+  }, [initializeContent]);
 
   // Show loading state while checking auth
   if (isLoading) {

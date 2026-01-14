@@ -4,7 +4,6 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
   deleteDoc,
   query,
   where,
@@ -101,10 +100,10 @@ export const contentService = {
   },
 
   async updateService(id: string, data: Partial<ServiceCluster>): Promise<void> {
-    await updateDoc(doc(db, 'services', id), {
+    await setDoc(doc(db, 'services', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deleteService(id: string): Promise<void> {
@@ -157,10 +156,10 @@ export const contentService = {
   },
 
   async updateProject(id: string, data: Partial<Project>): Promise<void> {
-    await updateDoc(doc(db, 'projects', id), {
+    await setDoc(doc(db, 'projects', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deleteProject(id: string): Promise<void> {
@@ -199,10 +198,10 @@ export const contentService = {
   },
 
   async updateBlogPost(id: string, data: Partial<BlogPost>): Promise<void> {
-    await updateDoc(doc(db, 'blogPosts', id), {
+    await setDoc(doc(db, 'blogPosts', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deleteBlogPost(id: string): Promise<void> {
@@ -229,10 +228,10 @@ export const contentService = {
   },
 
   async updateTeamMember(id: string, data: Partial<TeamMember>): Promise<void> {
-    await updateDoc(doc(db, 'teamMembers', id), {
+    await setDoc(doc(db, 'teamMembers', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deleteTeamMember(id: string): Promise<void> {
@@ -274,10 +273,10 @@ export const contentService = {
   },
 
   async updateFAQ(id: string, data: Partial<FAQ>): Promise<void> {
-    await updateDoc(doc(db, 'faqs', id), {
+    await setDoc(doc(db, 'faqs', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deleteFAQ(id: string): Promise<void> {
@@ -321,10 +320,10 @@ export const contentService = {
   },
 
   async updatePartner(id: string, data: Partial<Partner>): Promise<void> {
-    await updateDoc(doc(db, 'partners', id), {
+    await setDoc(doc(db, 'partners', id), {
       ...data,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   },
 
   async deletePartner(id: string): Promise<void> {

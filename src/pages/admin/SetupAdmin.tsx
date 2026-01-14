@@ -68,6 +68,36 @@ export const SetupAdmin = () => {
     }
   };
 
+  const upgradeToSuperAdmin = async () => {
+    if (!user || !auth.currentUser) {
+      setError('You must be logged in');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      // Update current user to super_admin
+      await setDoc(
+        doc(db, 'users', user.id),
+        {
+          ...user,
+          role: 'super_admin',
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      setMessage('You are now a Super Admin! Please refresh the page and log in again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upgrade to super admin');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div style={styles.container}>
@@ -106,6 +136,18 @@ export const SetupAdmin = () => {
         </button>
       </div>
 
+      <div style={styles.section}>
+        <h2>Step 3: Upgrade to Super Admin</h2>
+        <p>If you are already an admin, you can upgrade to Super Admin for full access including user management.</p>
+        <button
+          onClick={upgradeToSuperAdmin}
+          disabled={loading}
+          style={styles.buttonWarning}
+        >
+          {loading ? 'Upgrading...' : 'Upgrade to Super Admin'}
+        </button>
+      </div>
+
       {message && <p style={styles.success}>{message}</p>}
       {error && <p style={styles.error}>{error}</p>}
     </div>
@@ -127,6 +169,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   button: {
     backgroundColor: '#2563eb',
+    color: 'white',
+    padding: '12px 24px',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    marginTop: '10px',
+  },
+  buttonWarning: {
+    backgroundColor: '#dc2626',
     color: 'white',
     padding: '12px 24px',
     border: 'none',

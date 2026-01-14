@@ -420,14 +420,13 @@ export const AdminLayout = () => {
         <SidebarFooter>
           <UserInfo>
             <UserAvatar>
-              {user?.firstName?.[0]}
-              {user?.lastName?.[0]}
+              {permissions.isSuperAdmin ? 'SA' : 'A'}
             </UserAvatar>
             <UserDetails>
               <UserName>
-                {user?.firstName} {user?.lastName}
+                {permissions.isSuperAdmin ? 'Super Admin' : 'Admin'}
               </UserName>
-              <UserRole>{permissions.isSuperAdmin ? 'Super Admin' : 'Administrator'}</UserRole>
+              <UserRole>{user?.email}</UserRole>
             </UserDetails>
           </UserInfo>
           <LogoutButton onClick={handleLogout}>

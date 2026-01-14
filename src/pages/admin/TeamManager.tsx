@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Plus, Edit2, Trash2, Save, X, Search, Mail, Linkedin, Twitter } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search, Mail, Linkedin, Twitter, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -279,12 +279,41 @@ const initialFormData: TeamFormData = {
 };
 
 export const TeamManager = () => {
-  const { teamMembers, addTeamMember, updateTeamMember, deleteTeamMember } = useContentStore();
+  const { teamMembers, addTeamMember, updateTeamMember, deleteTeamMember, uploadFile } = useContentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [formData, setFormData] = useState<TeamFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const path = `team/${Date.now()}_${file.name}`;
+      const url = await uploadFile(file, path);
+      setFormData((prev) => ({ ...prev, image: url }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const filteredMembers = teamMembers.filter(
     (m) =>
@@ -468,14 +497,65 @@ export const TeamManager = () => {
                 placeholder="Brief biography..."
                 fullWidth
               />
-              <Input
-                label="Profile Image URL"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/team-member.jpg"
-                fullWidth
-              />
+              <div>
+                <SectionLabel>Profile Image</SectionLabel>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                />
+                {formData.image ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img
+                      src={formData.image}
+                      alt="Profile"
+                      style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        isLoading={uploadingImage}
+                      >
+                        Change
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed var(--color-neutral-300)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: '1.5rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {uploadingImage ? (
+                      <p style={{ color: 'var(--color-neutral-500)', margin: 0 }}>Uploading...</p>
+                    ) : (
+                      <>
+                        <Upload size={24} style={{ color: 'var(--color-neutral-400)', marginBottom: '0.5rem' }} />
+                        <p style={{ color: 'var(--color-neutral-500)', margin: 0, fontSize: '0.875rem' }}>
+                          Click to upload profile image
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
               <div>
                 <SectionLabel>Social Links</SectionLabel>
                 <FormRow>

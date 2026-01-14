@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Plus, Edit2, Trash2, Save, X, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -271,12 +271,41 @@ const initialFormData: Omit<Project, 'id'> = {
 };
 
 export const ProjectsManager = () => {
-  const { projects, addProject, updateProject, deleteProject } = useContentStore();
+  const { projects, addProject, updateProject, deleteProject, uploadFile } = useContentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState<Omit<Project, 'id'>>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const path = `projects/${Date.now()}_${file.name}`;
+      const url = await uploadFile(file, path);
+      setFormData((prev) => ({ ...prev, image: url }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const filteredProjects = projects.filter(
     (p) =>
@@ -441,14 +470,78 @@ export const ProjectsManager = () => {
                 placeholder="e.g., Education, Health, Infrastructure"
                 fullWidth
               />
-              <Input
-                label="Image URL"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/project-image.jpg"
-                fullWidth
-              />
+              <div>
+                <Label>Project Image</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                />
+                {formData.image ? (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                      <img
+                        src={formData.image}
+                        alt="Project"
+                        style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+                      />
+                      <button
+                        onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                        style={{
+                          position: 'absolute',
+                          top: '0.5rem',
+                          right: '0.5rem',
+                          background: 'rgba(0,0,0,0.6)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '28px',
+                          height: '28px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white',
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      isLoading={uploadingImage}
+                    >
+                      Change Image
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed var(--color-neutral-300)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: '1.5rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      marginTop: '0.5rem',
+                    }}
+                  >
+                    {uploadingImage ? (
+                      <p style={{ color: 'var(--color-neutral-500)', margin: 0 }}>Uploading...</p>
+                    ) : (
+                      <>
+                        <Upload size={24} style={{ color: 'var(--color-neutral-400)', marginBottom: '0.5rem' }} />
+                        <p style={{ color: 'var(--color-neutral-500)', margin: 0, fontSize: '0.875rem' }}>
+                          Click to upload project image
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
               <SelectWrapper>
                 <Label>Status</Label>
                 <Select name="status" value={formData.status} onChange={handleChange}>

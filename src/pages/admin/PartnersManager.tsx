@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Plus, Edit2, Trash2, Save, X, Search, ExternalLink, GripVertical } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Search, ExternalLink, GripVertical, Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -272,12 +272,41 @@ const initialFormData: PartnerFormData = {
 };
 
 export const PartnersManager = () => {
-  const { partners, addPartner, updatePartner, deletePartner } = useContentStore();
+  const { partners, addPartner, updatePartner, deletePartner, uploadFile } = useContentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [formData, setFormData] = useState<PartnerFormData>(initialFormData);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const path = `partners/${Date.now()}_${file.name}`;
+      const url = await uploadFile(file, path);
+      setFormData((prev) => ({ ...prev, logo: url }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const filteredPartners = partners
     .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -452,22 +481,62 @@ export const PartnersManager = () => {
                 fullWidth
               />
               <div>
-                <Input
-                  label="Logo URL"
-                  name="logo"
-                  value={formData.logo}
-                  onChange={handleChange}
-                  placeholder="/partner logos/logo.png"
-                  required
-                  fullWidth
+                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-neutral-700)', marginBottom: '0.5rem', display: 'block' }}>
+                  Partner Logo *
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleLogoUpload}
                 />
-                {formData.logo && (
+                {formData.logo ? (
                   <LogoPreview>
                     <img src={formData.logo} alt="Logo preview" onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }} />
                     <p>Logo Preview</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        isLoading={uploadingLogo}
+                      >
+                        Change Logo
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData((prev) => ({ ...prev, logo: '' }))}
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
                   </LogoPreview>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed var(--color-neutral-300)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: '1.5rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {uploadingLogo ? (
+                      <p style={{ color: 'var(--color-neutral-500)', margin: 0 }}>Uploading...</p>
+                    ) : (
+                      <>
+                        <Upload size={24} style={{ color: 'var(--color-neutral-400)', marginBottom: '0.5rem' }} />
+                        <p style={{ color: 'var(--color-neutral-500)', margin: 0, fontSize: '0.875rem' }}>
+                          Click to upload partner logo
+                        </p>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
               <Input

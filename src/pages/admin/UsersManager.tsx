@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { Edit2, Search, Shield, ShieldOff, UserCog, AlertTriangle } from 'lucide-react';
+import { Edit2, Search, Shield, ShieldOff, UserCog, AlertTriangle, Plus, X, Mail } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { useAuthStore } from '../../stores/authStore';
 import { usePermissions } from '../../hooks/usePermissions';
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, setDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../config/firebase';
 import type { User, UserRole } from '../../types';
 
 const PageWrapper = styled.div``;
@@ -351,6 +354,17 @@ export const UsersManager = () => {
   const [editRole, setEditRole] = useState<UserRole>('guest');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Create user state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    role: 'admin' as UserRole,
+  });
+  const [createError, setCreateError] = useState('');
+
   // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
@@ -450,19 +464,104 @@ export const UsersManager = () => {
     return role === 'super_admin' ? 'Super Admin' : role.charAt(0).toUpperCase() + role.slice(1);
   };
 
+  const handleCreateUser = async () => {
+    if (!newUserData.email || !newUserData.password || !newUserData.firstName || !newUserData.lastName) {
+      setCreateError('All fields are required');
+      return;
+    }
+
+    if (newUserData.password.length < 6) {
+      setCreateError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsSaving(true);
+    setCreateError('');
+
+    try {
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        newUserData.email,
+        newUserData.password
+      );
+
+      // Create user document in Firestore
+      const newUser: User = {
+        id: userCredential.user.uid,
+        email: newUserData.email,
+        firstName: newUserData.firstName,
+        lastName: newUserData.lastName,
+        role: newUserData.role,
+        createdAt: new Date().toISOString(),
+        isDisabled: false,
+      };
+
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        ...newUser,
+        createdAt: serverTimestamp(),
+      });
+
+      // Add to local state
+      setUsers((prev) => [newUser, ...prev]);
+
+      // Reset form and close modal
+      setNewUserData({
+        email: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        role: 'admin',
+      });
+      setShowCreateModal(false);
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        setCreateError('This email is already registered');
+      } else if (error.code === 'auth/invalid-email') {
+        setCreateError('Invalid email address');
+      } else {
+        setCreateError(error.message || 'Failed to create user');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setNewUserData({
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      role: 'admin',
+    });
+    setCreateError('');
+    setShowCreateModal(false);
+  };
+
   return (
     <PageWrapper>
       <Header>
         <Title>Manage Users</Title>
-        <SearchBox>
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </SearchBox>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <SearchBox>
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </SearchBox>
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={18} />}
+            onClick={() => setShowCreateModal(true)}
+          >
+            Add User
+          </Button>
+        </div>
       </Header>
 
       <StatsBar>
@@ -620,6 +719,103 @@ export const UsersManager = () => {
               </Button>
               <Button variant="primary" onClick={handleSaveRole} isLoading={isSaving}>
                 Save Changes
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <ModalOverlay onClick={resetCreateForm}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>Create New User</ModalTitle>
+              <ActionButton onClick={resetCreateForm}>
+                <X size={18} />
+              </ActionButton>
+            </ModalHeader>
+            <ModalBody>
+              {createError && (
+                <WarningBox style={{ background: '#fee2e2', color: '#dc2626' }}>
+                  <AlertTriangle size={18} />
+                  <div>{createError}</div>
+                </WarningBox>
+              )}
+              <div>
+                <Label>Email *</Label>
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData((prev) => ({ ...prev, email: e.target.value }))}
+                  fullWidth
+                />
+              </div>
+              <div>
+                <Label>Password *</Label>
+                <Input
+                  type="password"
+                  placeholder="Minimum 6 characters"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData((prev) => ({ ...prev, password: e.target.value }))}
+                  fullWidth
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <Label>First Name *</Label>
+                  <Input
+                    type="text"
+                    placeholder="John"
+                    value={newUserData.firstName}
+                    onChange={(e) => setNewUserData((prev) => ({ ...prev, firstName: e.target.value }))}
+                    fullWidth
+                  />
+                </div>
+                <div>
+                  <Label>Last Name *</Label>
+                  <Input
+                    type="text"
+                    placeholder="Doe"
+                    value={newUserData.lastName}
+                    onChange={(e) => setNewUserData((prev) => ({ ...prev, lastName: e.target.value }))}
+                    fullWidth
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Role</Label>
+                <RoleSelect
+                  value={newUserData.role}
+                  onChange={(e) => setNewUserData((prev) => ({ ...prev, role: e.target.value as UserRole }))}
+                >
+                  <option value="guest">Guest</option>
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </RoleSelect>
+              </div>
+              {newUserData.role === 'super_admin' && (
+                <WarningBox>
+                  <AlertTriangle size={18} />
+                  <div>
+                    <strong>Warning:</strong> Super Admins have full access to all features including user management.
+                  </div>
+                </WarningBox>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" onClick={resetCreateForm}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                leftIcon={<Mail size={16} />}
+                onClick={handleCreateUser}
+                isLoading={isSaving}
+              >
+                Create User
               </Button>
             </ModalFooter>
           </ModalContent>

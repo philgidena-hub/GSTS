@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Save, Upload, RefreshCw } from 'lucide-react';
+import { Save, Upload, RefreshCw, X } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -171,10 +171,12 @@ const SuccessMessage = styled.div`
 `;
 
 export const HeroEditor = () => {
-  const { hero, updateHero } = useContentStore();
+  const { hero, updateHero, uploadFile } = useContentStore();
   const [formData, setFormData] = useState(hero);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -183,6 +185,33 @@ export const HeroEditor = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const path = `hero/${Date.now()}_${file.name}`;
+      const url = await uploadFile(file, path);
+      setFormData((prev) => ({ ...prev, backgroundImage: url }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = async () => {
@@ -296,22 +325,65 @@ export const HeroEditor = () => {
 
           <Card variant="default" padding="lg" className="mt-6">
             <SectionTitle>Background Image</SectionTitle>
-            <ImageUpload>
-              <UploadIcon>
-                <Upload size={24} />
-              </UploadIcon>
-              <UploadText>Click to upload or drag and drop</UploadText>
-              <UploadHint>PNG, JPG up to 5MB (Recommended: 1920x1080)</UploadHint>
-            </ImageUpload>
-            <Input
-              label="Or enter image URL"
-              name="backgroundImage"
-              value={formData.backgroundImage}
-              onChange={handleChange}
-              placeholder="/images/hero-bg.jpg"
-              fullWidth
-              style={{ marginTop: '1rem' }}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleImageUpload}
             />
+            {formData.backgroundImage ? (
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                  <img
+                    src={formData.backgroundImage}
+                    alt="Background preview"
+                    style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                  />
+                  <button
+                    onClick={() => setFormData((prev) => ({ ...prev, backgroundImage: '' }))}
+                    style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'rgba(0,0,0,0.6)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ marginTop: '0.5rem' }}
+                  isLoading={uploadingImage}
+                >
+                  Change Image
+                </Button>
+              </div>
+            ) : (
+              <ImageUpload onClick={() => fileInputRef.current?.click()}>
+                <UploadIcon>
+                  {uploadingImage ? (
+                    <div style={{ width: 24, height: 24, border: '2px solid #ccc', borderTopColor: '#333', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Upload size={24} />
+                  )}
+                </UploadIcon>
+                <UploadText>{uploadingImage ? 'Uploading...' : 'Click to upload or drag and drop'}</UploadText>
+                <UploadHint>PNG, JPG up to 5MB (Recommended: 1920x1080)</UploadHint>
+              </ImageUpload>
+            )}
           </Card>
         </FormSection>
 

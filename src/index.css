@@ -131,16 +131,7 @@ body {
   min-height: 100vh;
 }
 
-/* Custom Cursor - Hide default cursor on desktop */
-@media (hover: hover) and (pointer: fine) {
-  body {
-    cursor: none;
-  }
-
-  a, button, [role="button"], input, textarea, select, [data-cursor] {
-    cursor: none;
-  }
-}
+/* Custom cursor styles removed - using default system cursor for better usability */
 
 #root {
   min-height: 100vh;

@@ -170,10 +170,14 @@ const MissionVisionCard = styled(motion.div)<{ $variant: 'primary' | 'secondary'
   padding: 2.5rem;
   background: ${({ $variant }) =>
     $variant === 'primary'
-      ? 'linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-800) 100%)'
-      : 'linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 100%)'};
+      ? 'linear-gradient(135deg, #0066CC 0%, #004499 100%)'
+      : 'linear-gradient(135deg, #E69500 0%, #CC8400 100%)'};
   border-radius: 8px;
   color: white;
+  box-shadow: ${({ $variant }) =>
+    $variant === 'primary'
+      ? '0 10px 40px -10px rgba(0, 102, 204, 0.4)'
+      : '0 10px 40px -10px rgba(230, 149, 0, 0.4)'};
 `;
 
 const CardIcon = styled.div`
@@ -197,7 +201,7 @@ const CardTitle = styled.h3`
 const CardText = styled.p`
   font-size: 1rem;
   line-height: 1.8;
-  opacity: 0.9;
+  color: white;
 `;
 
 // Values Section

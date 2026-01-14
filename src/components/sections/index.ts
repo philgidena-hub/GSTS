@@ -3,6 +3,7 @@ export { About } from './About';
 export { Services } from './Services';
 export { Statistics } from './Statistics';
 export { Projects } from './Projects';
+export { Partners } from './Partners';
 export { News } from './News';
 export { Contact } from './Contact';
 export { CTA } from './CTA';

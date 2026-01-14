@@ -25,20 +25,20 @@ const CursorOuter = styled(motion.div)<{ $variant: string }>`
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease, background 0.3s ease, border-color 0.3s ease;
-  mix-blend-mode: difference;
+  transition: width 0.3s ease, height 0.3s ease, background 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+  opacity: 0.8;
 
   ${({ $variant }) => $variant === 'link' && `
     width: 60px;
     height: 60px;
-    background: rgba(0, 82, 204, 0.1);
+    background: rgba(0, 82, 204, 0.15);
     border-color: var(--color-secondary-500);
   `}
 
   ${({ $variant }) => $variant === 'button' && `
     width: 80px;
     height: 80px;
-    background: rgba(212, 160, 18, 0.15);
+    background: rgba(212, 160, 18, 0.2);
     border-color: var(--color-secondary-500);
   `}
 

@@ -3,6 +3,7 @@ import {
   About,
   Statistics,
   Projects,
+  Partners,
   News,
   GetInvolved,
 } from '../components/sections';
@@ -14,6 +15,7 @@ export const Home = () => {
       <About />
       <Statistics />
       <Projects />
+      <Partners />
       <News />
       <GetInvolved />
     </>

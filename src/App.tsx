@@ -22,7 +22,8 @@ import {
 import { SetupAdmin } from './pages/admin/SetupAdmin';
 import { useAuthStore } from './stores/authStore';
 import { useContentStore } from './stores/contentStore';
-import { CustomCursor } from './components/cursor';
+// Custom cursor disabled for better usability
+// import { CustomCursor } from './components/cursor';
 import { PageTransition } from './components/transitions';
 
 // Protected Route wrapper
@@ -227,7 +228,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <CustomCursor />
       <AnimatedRoutes />
     </BrowserRouter>
   );

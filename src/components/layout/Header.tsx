@@ -642,7 +642,7 @@ export const Header = () => {
                       transition={{ duration: 0.15 }}
                       style={{ right: 0, left: 'auto' }}
                     >
-                      {user?.role === 'admin' && (
+                      {(user?.role === 'admin' || user?.role === 'super_admin') && (
                         <DropdownItem>
                           <DropdownLink to="/admin">
                             <Settings
@@ -654,9 +654,9 @@ export const Header = () => {
                         </DropdownItem>
                       )}
                       <DropdownItem>
-                        <DropdownLink to="/profile">
+                        <DropdownLink to="/member-portal">
                           <User size={16} style={{ marginRight: '0.5rem' }} />
-                          My Profile
+                          Member Portal
                         </DropdownLink>
                       </DropdownItem>
                       <DropdownItem>
@@ -716,7 +716,7 @@ export const Header = () => {
             <MobileActions>
               {isAuthenticated ? (
                 <>
-                  {user?.role === 'admin' && (
+                  {(user?.role === 'admin' || user?.role === 'super_admin') && (
                     <Button
                       variant="outline"
                       fullWidth
@@ -725,6 +725,13 @@ export const Header = () => {
                       Admin Panel
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    onClick={() => navigate('/member-portal')}
+                  >
+                    Member Portal
+                  </Button>
                   <Button variant="outline" fullWidth onClick={handleLogout}>
                     Logout
                   </Button>

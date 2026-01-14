@@ -4,6 +4,8 @@ import { AnimatePresence } from 'framer-motion';
 import { Layout } from './components/layout';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { Home, Membership, Login, About, Services, Contact, News, NewsDetail, Projects } from './pages';
+import { MembershipSuccess } from './pages/MembershipSuccess';
+import { MemberPortal } from './pages/MemberPortal';
 import {
   Dashboard,
   HeroEditor,
@@ -97,6 +99,26 @@ const AnimatedRoutes = () => {
             <Layout>
               <PageTransition>
                 <Membership />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/membership/success"
+          element={
+            <Layout>
+              <PageTransition>
+                <MembershipSuccess />
+              </PageTransition>
+            </Layout>
+          }
+        />
+        <Route
+          path="/member-portal"
+          element={
+            <Layout>
+              <PageTransition>
+                <MemberPortal />
               </PageTransition>
             </Layout>
           }

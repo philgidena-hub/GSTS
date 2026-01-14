@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import {
@@ -9,11 +10,13 @@ import {
   Award,
   Briefcase,
   AlertCircle,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useAuthStore } from '../stores/authStore';
+import { paymentService } from '../services/payment.service';
 
 const PageWrapper = styled.div`
   padding-top: 80px;
@@ -420,6 +423,7 @@ const benefits = [
 ];
 
 export const Membership = () => {
+  const navigate = useNavigate();
   const { plans, submitApplication, fetchPlans, setError } = useAuthStore();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -427,6 +431,7 @@ export const Membership = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -475,18 +480,52 @@ export const Membership = () => {
     setSubmitError(null);
     setError(null);
 
+    const selectedPlanData = plans.find((p) => p.id === selectedPlan);
+    const isPaidPlan = selectedPlanData && selectedPlanData.price > 0;
+
     try {
-      await submitApplication({
+      // Submit application first
+      const applicationId = await submitApplication({
         ...formData,
         expertise: formData.expertise.split(',').map((exp) => exp.trim()).filter(Boolean),
         planId: selectedPlan || plans[0]?.id || 'associate',
       });
 
-      setIsSuccess(true);
+      // If it's a paid plan and Stripe is configured, redirect to payment
+      if (isPaidPlan && paymentService.isConfigured()) {
+        setIsProcessingPayment(true);
+        try {
+          const session = await paymentService.createCheckoutSession({
+            planId: selectedPlanData.id,
+            planName: selectedPlanData.name,
+            price: selectedPlanData.price,
+            currency: selectedPlanData.currency || 'usd',
+            interval: selectedPlanData.interval,
+            customerEmail: formData.email,
+            applicationId,
+          });
+
+          // Redirect to Stripe Checkout
+          if (session.url) {
+            window.location.href = session.url;
+          } else {
+            await paymentService.redirectToCheckout(session.sessionId);
+          }
+        } catch (paymentError: any) {
+          // Payment setup failed, but application was submitted
+          console.error('Payment processing not available:', paymentError);
+          // Redirect to success page anyway - admin will follow up for payment
+          navigate('/membership/success');
+        }
+      } else {
+        // Free plan or Stripe not configured - go to success
+        setIsSuccess(true);
+      }
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setIsProcessingPayment(false);
     }
   };
 
@@ -752,16 +791,26 @@ export const Membership = () => {
               />
             </FormRow>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              fullWidth
-              isLoading={isSubmitting}
-              rightIcon={<ArrowRight size={18} />}
-            >
-              Submit Application
-            </Button>
+            {(() => {
+              const selectedPlanData = plans.find((p) => p.id === selectedPlan);
+              const isPaidPlan = selectedPlanData && selectedPlanData.price > 0;
+              return (
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  isLoading={isSubmitting || isProcessingPayment}
+                  rightIcon={isPaidPlan ? <CreditCard size={18} /> : <ArrowRight size={18} />}
+                >
+                  {isProcessingPayment
+                    ? 'Redirecting to Payment...'
+                    : isPaidPlan
+                    ? `Submit & Pay ${paymentService.formatPrice(selectedPlanData.price)}`
+                    : 'Submit Application'}
+                </Button>
+              );
+            })()}
           </form>
         )}
       </Modal>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { Edit2, Search, Shield, ShieldOff, UserCog, AlertTriangle, Plus, X, Mail } from 'lucide-react';
+import { Edit2, Search, Shield, ShieldOff, UserCog, AlertTriangle, Plus, X, Mail, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -8,8 +8,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { usePermissions } from '../../hooks/usePermissions';
 import { collection, getDocs, doc, updateDoc, setDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../config/firebase';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { secondaryAuth } from '../../config/firebase';
 import type { User, UserRole } from '../../types';
 
 const PageWrapper = styled.div``;
@@ -364,6 +364,7 @@ export const UsersManager = () => {
     role: 'admin' as UserRole,
   });
   const [createError, setCreateError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch all users
   useEffect(() => {
@@ -479,9 +480,10 @@ export const UsersManager = () => {
     setCreateError('');
 
     try {
-      // Create user in Firebase Auth
+      // Create user in Firebase Auth using secondary auth instance
+      // This prevents signing out the current admin user
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        secondaryAuth,
         newUserData.email,
         newUserData.password
       );
@@ -501,6 +503,9 @@ export const UsersManager = () => {
         ...newUser,
         createdAt: serverTimestamp(),
       });
+
+      // Sign out from secondary auth (cleanup)
+      await signOut(secondaryAuth);
 
       // Add to local state
       setUsers((prev) => [newUser, ...prev]);
@@ -537,6 +542,7 @@ export const UsersManager = () => {
       role: 'admin',
     });
     setCreateError('');
+    setShowPassword(false);
     setShowCreateModal(false);
   };
 
@@ -754,13 +760,35 @@ export const UsersManager = () => {
               </div>
               <div>
                 <Label>Password *</Label>
-                <Input
-                  type="password"
-                  placeholder="Minimum 6 characters"
-                  value={newUserData.password}
-                  onChange={(e) => setNewUserData((prev) => ({ ...prev, password: e.target.value }))}
-                  fullWidth
-                />
+                <div style={{ position: 'relative' }}>
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Minimum 6 characters"
+                    value={newUserData.password}
+                    onChange={(e) => setNewUserData((prev) => ({ ...prev, password: e.target.value }))}
+                    fullWidth
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--color-neutral-500)',
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>

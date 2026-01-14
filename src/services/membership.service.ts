@@ -13,7 +13,11 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { emailService } from './email.service';
 import type { Member, MembershipApplication, MembershipPlan } from '../types';
+
+// Admin emails to notify for new applications
+const ADMIN_NOTIFICATION_EMAILS = ['admin@gsts.org']; // Configure this
 
 // Helper to convert Firestore timestamps
 const convertTimestamp = (data: any) => {
@@ -148,6 +152,32 @@ export const membershipService = {
       submittedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     });
+
+    // Get plan name for email
+    const plan = await this.getPlanById(data.planId);
+    const planName = plan?.name || 'Membership';
+
+    // Send confirmation email to applicant
+    try {
+      await emailService.sendApplicationSubmittedEmail(data.email, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        planName,
+      });
+
+      // Notify admins about new application
+      await emailService.sendNewApplicationNotification(ADMIN_NOTIFICATION_EMAILS, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        profession: data.profession,
+        planName,
+      });
+    } catch (emailError) {
+      // Log but don't fail the application submission
+      console.error('Failed to send notification emails:', emailError);
+    }
+
     return docRef.id;
   },
 
@@ -160,6 +190,10 @@ export const membershipService = {
       throw new Error('Application not found');
     }
 
+    // Get plan to calculate expiry date
+    const plan = await this.getPlanById(application.planId);
+    const expiryDate = this.calculateExpiryDate(plan?.interval || 'yearly');
+
     // Update application status
     await updateDoc(doc(db, 'membershipApplications', applicationId), {
       status: 'approved',
@@ -167,7 +201,7 @@ export const membershipService = {
       reviewedBy,
     });
 
-    // Create new member
+    // Create new member with expiry date
     const memberId = await this.addMember({
       email: application.email,
       firstName: application.firstName,
@@ -178,10 +212,124 @@ export const membershipService = {
       membershipPlanId: application.planId,
       membershipStatus: 'active',
       joinedDate: new Date().toISOString(),
+      expiryDate,
       expertise: application.expertise,
     });
 
+    // Send approval email
+    try {
+      const planName = plan?.name || 'Membership';
+
+      await emailService.sendApplicationApprovedEmail(application.email, {
+        firstName: application.firstName,
+        lastName: application.lastName,
+        planName,
+      });
+    } catch (emailError) {
+      console.error('Failed to send approval email:', emailError);
+    }
+
     return memberId;
+  },
+
+  /**
+   * Calculate expiry date based on plan interval
+   */
+  calculateExpiryDate(interval: 'monthly' | 'yearly' | 'lifetime'): string | undefined {
+    const now = new Date();
+
+    switch (interval) {
+      case 'monthly':
+        now.setMonth(now.getMonth() + 1);
+        return now.toISOString();
+      case 'yearly':
+        now.setFullYear(now.getFullYear() + 1);
+        return now.toISOString();
+      case 'lifetime':
+        return undefined; // No expiry for lifetime members
+      default:
+        now.setFullYear(now.getFullYear() + 1);
+        return now.toISOString();
+    }
+  },
+
+  /**
+   * Check if a membership is expired
+   */
+  isMembershipExpired(expiryDate: string | undefined): boolean {
+    if (!expiryDate) return false; // Lifetime membership
+    return new Date(expiryDate) < new Date();
+  },
+
+  /**
+   * Get days until membership expires
+   */
+  getDaysUntilExpiry(expiryDate: string | undefined): number | null {
+    if (!expiryDate) return null; // Lifetime membership
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    const diffTime = expiry.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  },
+
+  /**
+   * Renew membership for a member
+   */
+  async renewMembership(memberId: string): Promise<void> {
+    const member = await this.getMemberById(memberId);
+    if (!member) {
+      throw new Error('Member not found');
+    }
+
+    const plan = await this.getPlanById(member.membershipPlanId);
+    const newExpiryDate = this.calculateExpiryDate(plan?.interval || 'yearly');
+
+    await updateDoc(doc(db, 'members', memberId), {
+      membershipStatus: 'active',
+      expiryDate: newExpiryDate,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
+  /**
+   * Expire memberships that have passed their expiry date
+   * This should be called by a scheduled Firebase Function
+   */
+  async checkAndExpireMemberships(): Promise<number> {
+    const members = await this.getMembers();
+    let expiredCount = 0;
+
+    for (const member of members) {
+      if (
+        member.membershipStatus === 'active' &&
+        member.expiryDate &&
+        this.isMembershipExpired(member.expiryDate)
+      ) {
+        await updateDoc(doc(db, 'members', member.id), {
+          membershipStatus: 'expired',
+          updatedAt: serverTimestamp(),
+        });
+        expiredCount++;
+
+        // Send expiry notification email
+        try {
+          await emailService.sendEmail(
+            member.email,
+            'Your GSTS Membership Has Expired',
+            `
+              <h2>Membership Expired</h2>
+              <p>Dear ${member.firstName} ${member.lastName},</p>
+              <p>Your GSTS membership has expired. To continue enjoying member benefits, please renew your membership.</p>
+              <p>Visit our website to renew your membership today.</p>
+            `
+          );
+        } catch (emailError) {
+          console.error('Failed to send expiry email:', emailError);
+        }
+      }
+    }
+
+    return expiredCount;
   },
 
   async rejectApplication(
@@ -189,12 +337,27 @@ export const membershipService = {
     reviewedBy: string,
     notes?: string
   ): Promise<void> {
+    const application = await this.getApplicationById(applicationId);
+
     await updateDoc(doc(db, 'membershipApplications', applicationId), {
       status: 'rejected',
       reviewedAt: serverTimestamp(),
       reviewedBy,
       notes,
     });
+
+    // Send rejection email
+    if (application) {
+      try {
+        await emailService.sendApplicationRejectedEmail(application.email, {
+          firstName: application.firstName,
+          lastName: application.lastName,
+          notes,
+        });
+      } catch (emailError) {
+        console.error('Failed to send rejection email:', emailError);
+      }
+    }
   },
 
   async deleteApplication(id: string): Promise<void> {

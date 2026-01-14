@@ -75,9 +75,9 @@ const SliderWrapper = styled.div`
 const SliderTrack = styled.div`
   display: flex;
   align-items: center;
-  gap: 4rem;
+  gap: 5rem;
   width: max-content;
-  animation: ${scroll} 30s linear infinite;
+  animation: ${scroll} 25s linear infinite;
 
   &:hover {
     animation-play-state: paused;
@@ -94,8 +94,9 @@ const PartnerItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 80px;
-  padding: 1rem 2rem;
+  height: 100px;
+  min-width: 180px;
+  padding: 1.25rem 2.5rem;
   background: white;
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.06);
@@ -119,13 +120,13 @@ const PartnerItem = styled.div`
 `;
 
 const PartnerLogo = styled.img`
-  max-height: 50px;
-  max-width: 140px;
+  max-height: 70px;
+  max-width: 160px;
   width: auto;
   height: auto;
   object-fit: contain;
   filter: grayscale(100%);
-  opacity: 0.7;
+  opacity: 0.6;
   transition: all 0.3s ease;
 
   /* Improve rendering of low-res images */
@@ -162,15 +163,11 @@ const partners = [
     name: 'Tigray Development Association',
     logo: '/partner logos/cropped-Site_Logo-removebg-preview.png',
   },
-  {
-    name: 'Smatrics',
-    logo: '/partner logos/Smatrics.png',
-  },
 ];
 
 export const Partners = () => {
-  // Duplicate partners array for seamless infinite scroll
-  const duplicatedPartners = [...partners, ...partners];
+  // Duplicate partners array multiple times for seamless infinite scroll
+  const duplicatedPartners = [...partners, ...partners, ...partners, ...partners];
 
   return (
     <Section>

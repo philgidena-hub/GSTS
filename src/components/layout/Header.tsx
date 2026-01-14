@@ -137,38 +137,34 @@ const HeaderContainer = styled.div`
 const Logo = styled(Link)`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   text-decoration: none;
 `;
 
-const LogoImage = styled.img`
-  height: 50px;
+const LogoImage = styled.img<{ $isScrolled: boolean }>`
+  height: 45px;
   width: auto;
-`;
-
-const LogoText = styled.div<{ $isScrolled: boolean }>`
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 480px) {
-    display: none;
-  }
+  transition: filter 0.3s ease;
+  filter: ${({ $isScrolled }) => ($isScrolled ? 'none' : 'brightness(0) invert(1)')};
 `;
 
 const LogoTitle = styled.span<{ $isScrolled: boolean }>`
   font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: ${({ $isScrolled }) => ($isScrolled ? 'var(--color-primary-800)' : 'white')};
-  line-height: 1.2;
-  letter-spacing: 0.5px;
-`;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  margin-top: 2px;
 
-const LogoSubtitle = styled.span<{ $isScrolled: boolean }>`
-  font-size: 0.6875rem;
-  color: ${({ $isScrolled }) => ($isScrolled ? 'var(--color-neutral-500)' : 'rgba(255, 255, 255, 0.7)')};
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Nav = styled.nav`
@@ -569,11 +565,8 @@ export const Header = () => {
       <HeaderWrapper $isScrolled={isScrolled}>
         <HeaderContainer>
           <Logo to="/">
-            <LogoImage src="/images/logo-gsts.png" alt="GSTS Logo" />
-            <LogoText $isScrolled={isScrolled}>
-              <LogoTitle $isScrolled={isScrolled}>GSTS</LogoTitle>
-              <LogoSubtitle $isScrolled={isScrolled}>Global Society of Tigray Scholars</LogoSubtitle>
-            </LogoText>
+            <LogoImage src="/images/logo-gsts.png" alt="GSTS Logo" $isScrolled={isScrolled} />
+            <LogoTitle $isScrolled={isScrolled}>Global Society of Tigray Scholars</LogoTitle>
           </Logo>
 
           <Nav>

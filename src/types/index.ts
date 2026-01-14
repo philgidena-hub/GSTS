@@ -159,6 +159,10 @@ export interface MembershipApplication {
   reviewedAt?: string;
   reviewedBy?: string;
   notes?: string;
+  // Payment fields
+  paymentStatus?: 'pending' | 'paid' | 'failed';
+  paymentSessionId?: string;
+  paymentCompletedAt?: string;
 }
 
 // User & Auth Types

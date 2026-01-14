@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -10,6 +10,9 @@ import {
   Eye,
   ChevronDown,
   User,
+  CreditCard,
+  DollarSign,
+  Download,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
@@ -31,6 +34,12 @@ const Title = styled.h1`
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--color-neutral-900);
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 `;
 
 const Filters = styled.div`
@@ -117,6 +126,7 @@ const StatsBar = styled.div`
   display: flex;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 `;
 
 const StatItem = styled.div`
@@ -129,7 +139,7 @@ const StatItem = styled.div`
   border: 1px solid var(--color-neutral-100);
 `;
 
-const StatIcon = styled.div<{ $type: 'pending' | 'approved' | 'rejected' }>`
+const StatIcon = styled.div<{ $type: 'pending' | 'approved' | 'rejected' | 'payment' }>`
   width: 32px;
   height: 32px;
   border-radius: var(--radius-md);
@@ -141,12 +151,16 @@ const StatIcon = styled.div<{ $type: 'pending' | 'approved' | 'rejected' }>`
       ? 'var(--color-secondary-100)'
       : $type === 'approved'
       ? '#d1fae5'
+      : $type === 'payment'
+      ? '#dbeafe'
       : '#fee2e2'};
   color: ${({ $type }) =>
     $type === 'pending'
       ? 'var(--color-secondary-600)'
       : $type === 'approved'
       ? 'var(--color-accent-success)'
+      : $type === 'payment'
+      ? '#2563eb'
       : 'var(--color-accent-error)'};
 `;
 
@@ -170,7 +184,7 @@ const Table = styled.div`
 
 const TableHeader = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 1fr 150px;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 150px;
   padding: 1rem 1.5rem;
   background: var(--color-neutral-50);
   font-size: 0.75rem;
@@ -180,6 +194,13 @@ const TableHeader = styled.div`
   color: var(--color-neutral-500);
   border-bottom: 1px solid var(--color-neutral-100);
 
+  @media (max-width: 1200px) {
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 150px;
+    & > div:nth-of-type(4) {
+      display: none;
+    }
+  }
+
   @media (max-width: 1024px) {
     display: none;
   }
@@ -187,7 +208,7 @@ const TableHeader = styled.div`
 
 const TableRow = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 1fr 150px;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 150px;
   padding: 1rem 1.5rem;
   align-items: center;
   border-bottom: 1px solid var(--color-neutral-100);
@@ -199,6 +220,13 @@ const TableRow = styled.div`
 
   &:hover {
     background: var(--color-neutral-50);
+  }
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 150px;
+    & > div:nth-of-type(4) {
+      display: none;
+    }
   }
 
   @media (max-width: 1024px) {
@@ -267,6 +295,43 @@ const StatusBadge = styled.span<{ $status: 'pending' | 'approved' | 'rejected' }
       : $status === 'approved'
       ? 'var(--color-accent-success)'
       : 'var(--color-accent-error)'};
+`;
+
+const PaymentBadge = styled.span<{ $status?: 'pending' | 'paid' | 'failed' | 'free' }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: ${({ $status }) =>
+    $status === 'paid'
+      ? '#d1fae5'
+      : $status === 'pending'
+      ? '#fef3c7'
+      : $status === 'failed'
+      ? '#fee2e2'
+      : 'var(--color-neutral-100)'};
+  color: ${({ $status }) =>
+    $status === 'paid'
+      ? 'var(--color-accent-success)'
+      : $status === 'pending'
+      ? '#d97706'
+      : $status === 'failed'
+      ? 'var(--color-accent-error)'
+      : 'var(--color-neutral-600)'};
+`;
+
+const PlanBadge = styled.span`
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
 `;
 
 const Actions = styled.div`
@@ -371,8 +436,38 @@ const EmptyState = styled.div`
   color: var(--color-neutral-500);
 `;
 
+const PaymentInfo = styled.div`
+  background: var(--color-neutral-50);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+`;
+
+const PaymentInfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-neutral-200);
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const PaymentInfoLabel = styled.span`
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+`;
+
+const PaymentInfoValue = styled.span`
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-neutral-900);
+`;
+
 export const ApplicationsManager = () => {
-  const { applications, approveApplication, rejectApplication, user } = useAuthStore();
+  const { applications, approveApplication, rejectApplication, user, plans, fetchApplications } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -380,6 +475,11 @@ export const ApplicationsManager = () => {
   const [rejectNotes, setRejectNotes] = useState('');
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Fetch applications on mount
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
@@ -394,6 +494,17 @@ export const ApplicationsManager = () => {
     pending: applications.filter((a) => a.status === 'pending').length,
     approved: applications.filter((a) => a.status === 'approved').length,
     rejected: applications.filter((a) => a.status === 'rejected').length,
+    paidApplications: applications.filter((a) => a.paymentStatus === 'paid').length,
+  };
+
+  const getPlanName = (planId: string): string => {
+    const plan = plans.find(p => p.id === planId);
+    return plan?.name || planId || 'N/A';
+  };
+
+  const getPlanPrice = (planId: string): number => {
+    const plan = plans.find(p => p.id === planId);
+    return plan?.price || 0;
   };
 
   const handleApprove = async (id: string) => {
@@ -417,51 +528,98 @@ export const ApplicationsManager = () => {
 
   const currentApplication = applications.find((a) => a.id === selectedApplication);
 
+  const getPaymentStatus = (app: typeof applications[0]): 'paid' | 'pending' | 'failed' | 'free' => {
+    const price = getPlanPrice(app.planId);
+    if (price === 0) return 'free';
+    return app.paymentStatus || 'pending';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  // Export applications to CSV
+  const handleExport = () => {
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Profession', 'Organization', 'Country', 'Plan', 'Payment Status', 'Status', 'Submitted Date'];
+    const rows = filteredApplications.map(app => [
+      app.firstName,
+      app.lastName,
+      app.email,
+      app.phone || '',
+      app.profession,
+      app.organization || '',
+      app.country,
+      getPlanName(app.planId),
+      getPaymentStatus(app),
+      app.status,
+      formatDate(app.submittedAt),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `gsts-applications-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   return (
     <Wrapper>
       <Header>
         <Title>Membership Applications</Title>
-        <Filters>
-          <SearchWrapper>
-            <Search size={18} />
-            <Input
-              type="text"
-              placeholder="Search applications..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              fullWidth
-            />
-          </SearchWrapper>
-          <FilterDropdown>
-            <FilterButton onClick={() => setIsFilterOpen(!isFilterOpen)}>
-              <Filter size={18} />
-              {statusFilter === 'all' ? 'All Status' : statusFilter}
-              <ChevronDown size={16} />
-            </FilterButton>
-            <AnimatePresence>
-              {isFilterOpen && (
-                <FilterMenu
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  {['all', 'pending', 'approved', 'rejected'].map((status) => (
-                    <FilterOption
-                      key={status}
-                      $isActive={statusFilter === status}
-                      onClick={() => {
-                        setStatusFilter(status as typeof statusFilter);
-                        setIsFilterOpen(false);
-                      }}
-                    >
-                      {status === 'all' ? 'All Status' : status}
-                    </FilterOption>
-                  ))}
-                </FilterMenu>
-              )}
-            </AnimatePresence>
-          </FilterDropdown>
-        </Filters>
+        <HeaderActions>
+          <Filters>
+            <SearchWrapper>
+              <Search size={18} />
+              <Input
+                type="text"
+                placeholder="Search applications..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                fullWidth
+              />
+            </SearchWrapper>
+            <FilterDropdown>
+              <FilterButton onClick={() => setIsFilterOpen(!isFilterOpen)}>
+                <Filter size={18} />
+                {statusFilter === 'all' ? 'All Status' : statusFilter}
+                <ChevronDown size={16} />
+              </FilterButton>
+              <AnimatePresence>
+                {isFilterOpen && (
+                  <FilterMenu
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {['all', 'pending', 'approved', 'rejected'].map((status) => (
+                      <FilterOption
+                        key={status}
+                        $isActive={statusFilter === status}
+                        onClick={() => {
+                          setStatusFilter(status as typeof statusFilter);
+                          setIsFilterOpen(false);
+                        }}
+                      >
+                        {status === 'all' ? 'All Status' : status}
+                      </FilterOption>
+                    ))}
+                  </FilterMenu>
+                )}
+              </AnimatePresence>
+            </FilterDropdown>
+          </Filters>
+          <Button variant="outline" leftIcon={<Download size={18} />} onClick={handleExport}>
+            Export
+          </Button>
+        </HeaderActions>
       </Header>
 
       <StatsBar>
@@ -486,12 +644,20 @@ export const ApplicationsManager = () => {
           <StatValue>{stats.rejected}</StatValue>
           <StatLabel>Rejected</StatLabel>
         </StatItem>
+        <StatItem>
+          <StatIcon $type="payment">
+            <DollarSign size={18} />
+          </StatIcon>
+          <StatValue>{stats.paidApplications}</StatValue>
+          <StatLabel>Paid</StatLabel>
+        </StatItem>
       </StatsBar>
 
       <Table>
         <TableHeader>
           <div>Applicant</div>
-          <div>Profession</div>
+          <div>Plan</div>
+          <div>Payment</div>
           <div>Country</div>
           <div>Status</div>
           <div>Actions</div>
@@ -517,7 +683,15 @@ export const ApplicationsManager = () => {
                   <ApplicantEmail>{app.email}</ApplicantEmail>
                 </ApplicantDetails>
               </ApplicantInfo>
-              <Cell>{app.profession}</Cell>
+              <Cell>
+                <PlanBadge>{getPlanName(app.planId)}</PlanBadge>
+              </Cell>
+              <Cell>
+                <PaymentBadge $status={getPaymentStatus(app)}>
+                  <CreditCard size={12} />
+                  {getPaymentStatus(app)}
+                </PaymentBadge>
+              </Cell>
               <Cell>{app.country}</Cell>
               <Cell>
                 <StatusBadge $status={app.status}>
@@ -611,10 +785,41 @@ export const ApplicationsManager = () => {
               <DetailItem>
                 <DetailLabel>Submitted</DetailLabel>
                 <DetailValue>
-                  {new Date(currentApplication.submittedAt).toLocaleDateString()}
+                  {formatDate(currentApplication.submittedAt)}
                 </DetailValue>
               </DetailItem>
             </DetailGrid>
+
+            {/* Payment & Plan Info */}
+            <PaymentInfo>
+              <PaymentInfoRow>
+                <PaymentInfoLabel>Membership Plan</PaymentInfoLabel>
+                <PlanBadge>{getPlanName(currentApplication.planId)}</PlanBadge>
+              </PaymentInfoRow>
+              <PaymentInfoRow>
+                <PaymentInfoLabel>Plan Price</PaymentInfoLabel>
+                <PaymentInfoValue>
+                  {getPlanPrice(currentApplication.planId) === 0
+                    ? 'Free'
+                    : `$${getPlanPrice(currentApplication.planId)}`}
+                </PaymentInfoValue>
+              </PaymentInfoRow>
+              <PaymentInfoRow>
+                <PaymentInfoLabel>Payment Status</PaymentInfoLabel>
+                <PaymentBadge $status={getPaymentStatus(currentApplication)}>
+                  <CreditCard size={12} />
+                  {getPaymentStatus(currentApplication)}
+                </PaymentBadge>
+              </PaymentInfoRow>
+              {currentApplication.paymentCompletedAt && (
+                <PaymentInfoRow>
+                  <PaymentInfoLabel>Payment Date</PaymentInfoLabel>
+                  <PaymentInfoValue>
+                    {formatDate(currentApplication.paymentCompletedAt)}
+                  </PaymentInfoValue>
+                </PaymentInfoRow>
+              )}
+            </PaymentInfo>
 
             <DetailItem style={{ marginBottom: '1.5rem' }}>
               <DetailLabel>Expertise</DetailLabel>
@@ -629,6 +834,23 @@ export const ApplicationsManager = () => {
               <DetailLabel>Motivation</DetailLabel>
               <MotivationText>{currentApplication.motivation}</MotivationText>
             </DetailItem>
+
+            {currentApplication.notes && (
+              <DetailItem style={{ marginTop: '1.5rem' }}>
+                <DetailLabel>Review Notes</DetailLabel>
+                <MotivationText>{currentApplication.notes}</MotivationText>
+              </DetailItem>
+            )}
+
+            {currentApplication.reviewedBy && (
+              <DetailItem style={{ marginTop: '1rem' }}>
+                <DetailLabel>Reviewed By</DetailLabel>
+                <DetailValue>
+                  {currentApplication.reviewedBy}
+                  {currentApplication.reviewedAt && ` on ${formatDate(currentApplication.reviewedAt)}`}
+                </DetailValue>
+              </DetailItem>
+            )}
 
             {currentApplication.status === 'pending' && (
               <ModalActions>

@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import { useContentStore } from '../../stores/contentStore';
 
 const scroll = keyframes`
   0% {
@@ -89,6 +90,38 @@ const PartnerItemWrapper = styled.div`
   padding-bottom: 2rem;
 `;
 
+const PartnerLink = styled.a`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  min-width: 180px;
+  padding: 1.25rem 2.5rem;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Target the logo on hover */
+  &:hover img {
+    filter: grayscale(0%);
+    opacity: 1;
+  }
+
+  /* Target the name on hover */
+  &:hover + span {
+    opacity: 1;
+  }
+`;
+
 const PartnerItem = styled.div`
   flex-shrink: 0;
   display: flex;
@@ -145,29 +178,16 @@ const PartnerName = styled.span`
   transition: opacity 0.3s ease;
 `;
 
-// Partner data
-const partners = [
-  {
-    name: 'Mekelle University',
-    logo: '/partner logos/mu_logo_mini.png',
-  },
-  {
-    name: 'Adigrat University',
-    logo: '/partner logos/Adigrat_Uni-removebg-preview-1.png',
-  },
-  {
-    name: 'Axum University',
-    logo: '/partner logos/Axum university.png',
-  },
-  {
-    name: 'Tigray Development Association',
-    logo: '/partner logos/cropped-Site_Logo-removebg-preview.png',
-  },
-];
-
 export const Partners = () => {
-  // Duplicate partners array multiple times for seamless infinite scroll
-  const duplicatedPartners = [...partners, ...partners, ...partners, ...partners];
+  const { partners } = useContentStore();
+
+  // Sort by order and duplicate for seamless infinite scroll
+  const sortedPartners = [...partners].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const duplicatedPartners = [...sortedPartners, ...sortedPartners, ...sortedPartners, ...sortedPartners];
+
+  if (partners.length === 0) {
+    return null;
+  }
 
   return (
     <Section>
@@ -181,14 +201,29 @@ export const Partners = () => {
       <SliderWrapper>
         <SliderTrack>
           {duplicatedPartners.map((partner, index) => (
-            <PartnerItemWrapper key={`${partner.name}-${index}`}>
-              <PartnerItem>
-                <PartnerLogo
-                  src={partner.logo}
-                  alt={partner.name}
-                  loading="lazy"
-                />
-              </PartnerItem>
+            <PartnerItemWrapper key={`${partner.id}-${index}`}>
+              {partner.website ? (
+                <PartnerLink
+                  href={partner.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Visit ${partner.name}`}
+                >
+                  <PartnerLogo
+                    src={partner.logo}
+                    alt={partner.name}
+                    loading="lazy"
+                  />
+                </PartnerLink>
+              ) : (
+                <PartnerItem>
+                  <PartnerLogo
+                    src={partner.logo}
+                    alt={partner.name}
+                    loading="lazy"
+                  />
+                </PartnerItem>
+              )}
               <PartnerName>{partner.name}</PartnerName>
             </PartnerItemWrapper>
           ))}

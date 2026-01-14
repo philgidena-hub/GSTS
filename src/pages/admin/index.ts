@@ -11,3 +11,5 @@ export { SiteSettings } from './SiteSettings';
 export { ServicesManager } from './ServicesManager';
 export { StatisticsManager } from './StatisticsManager';
 export { FAQManager } from './FAQManager';
+export { PartnersManager } from './PartnersManager';
+export { UsersManager } from './UsersManager';

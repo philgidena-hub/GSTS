@@ -31,6 +31,7 @@ import type {
   ContactInfo,
   FAQ,
   SiteSettings,
+  Partner,
 } from '../types';
 
 // Helper to convert Firestore timestamps
@@ -296,6 +297,38 @@ export const contentService = {
       { ...data, updatedAt: serverTimestamp() },
       { merge: true }
     );
+  },
+
+  // Partners
+  async getPartners(): Promise<Partner[]> {
+    const querySnapshot = await getDocs(
+      query(collection(db, 'partners'), orderBy('order', 'asc'))
+    );
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...convertTimestamp(doc.data()),
+    })) as Partner[];
+  },
+
+  async addPartner(data: Omit<Partner, 'id'>): Promise<string> {
+    const docRef = doc(collection(db, 'partners'));
+    await setDoc(docRef, {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return docRef.id;
+  },
+
+  async updatePartner(id: string, data: Partial<Partner>): Promise<void> {
+    await updateDoc(doc(db, 'partners', id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
+  async deletePartner(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'partners', id));
   },
 
   // File Upload

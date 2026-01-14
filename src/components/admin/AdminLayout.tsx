@@ -19,8 +19,11 @@ import {
   BarChart3,
   Layers,
   HelpCircle,
+  Handshake,
+  UserCog,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const LayoutWrapper = styled.div`
   display: flex;
@@ -287,43 +290,54 @@ const Overlay = styled.div<{ $isOpen: boolean }>`
   }
 `;
 
+// Nav items with permission keys for filtering
 const navItems = [
   {
     section: 'Dashboard',
     items: [
-      { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
-      { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+      { icon: LayoutDashboard, label: 'Overview', path: '/admin', permission: null },
+      { icon: BarChart3, label: 'Analytics', path: '/admin/analytics', permission: null },
     ],
   },
   {
     section: 'Content',
     items: [
-      { icon: Home, label: 'Hero Section', path: '/admin/hero' },
-      { icon: FileText, label: 'About', path: '/admin/about' },
-      { icon: Layers, label: 'Thematic Areas', path: '/admin/thematic-areas' },
-      { icon: ClipboardList, label: 'Projects', path: '/admin/projects' },
-      { icon: Newspaper, label: 'Blog Posts', path: '/admin/blog' },
-      { icon: Users, label: 'Team', path: '/admin/team' },
-      { icon: BarChart3, label: 'Statistics', path: '/admin/statistics' },
-      { icon: HelpCircle, label: 'FAQs', path: '/admin/faqs' },
+      { icon: Home, label: 'Hero Section', path: '/admin/hero', permission: 'canEditHero' as const },
+      { icon: FileText, label: 'About', path: '/admin/about', permission: 'canEditAbout' as const },
+      { icon: Layers, label: 'Thematic Areas', path: '/admin/thematic-areas', permission: 'canEditServices' as const },
+      { icon: ClipboardList, label: 'Projects', path: '/admin/projects', permission: 'canEditProjects' as const },
+      { icon: Newspaper, label: 'Blog Posts', path: '/admin/blog', permission: 'canEditBlog' as const },
+      { icon: Users, label: 'Team', path: '/admin/team', permission: 'canEditTeam' as const },
+      { icon: Handshake, label: 'Partners', path: '/admin/partners', permission: 'canEditPartners' as const },
+      { icon: BarChart3, label: 'Statistics', path: '/admin/statistics', permission: 'canEditStatistics' as const },
+      { icon: HelpCircle, label: 'FAQs', path: '/admin/faqs', permission: 'canEditFAQs' as const },
     ],
   },
   {
     section: 'Membership',
     items: [
-      { icon: UserCheck, label: 'Members', path: '/admin/members' },
-      { icon: Briefcase, label: 'Applications', path: '/admin/applications' },
+      { icon: UserCheck, label: 'Members', path: '/admin/members', permission: 'canManageMembers' as const },
+      { icon: Briefcase, label: 'Applications', path: '/admin/applications', permission: 'canManageApplications' as const },
     ],
   },
   {
     section: 'Communication',
     items: [
-      { icon: MessageSquare, label: 'Contact Messages', path: '/admin/messages' },
+      { icon: MessageSquare, label: 'Contact Messages', path: '/admin/messages', permission: 'canViewMessages' as const },
     ],
   },
   {
     section: 'Settings',
-    items: [{ icon: Settings, label: 'Site Settings', path: '/admin/settings' }],
+    items: [
+      { icon: Settings, label: 'Site Settings', path: '/admin/settings', permission: 'canEditSettings' as const },
+    ],
+  },
+  {
+    section: 'User Management',
+    superAdminOnly: true,
+    items: [
+      { icon: UserCog, label: 'Manage Users', path: '/admin/users', permission: 'canManageUsers' as const },
+    ],
   },
 ];
 
@@ -332,6 +346,7 @@ export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const permissions = usePermissions();
 
   const handleLogout = () => {
     logout();
@@ -362,25 +377,44 @@ export const AdminLayout = () => {
         </SidebarHeader>
 
         <SidebarNav>
-          {navItems.map((section) => (
-            <NavSection key={section.section}>
-              <NavSectionTitle>{section.section}</NavSectionTitle>
-              <NavList>
-                {section.items.map((item) => (
-                  <NavItem key={item.path}>
-                    <NavLink
-                      to={item.path}
-                      $isActive={location.pathname === item.path}
-                      onClick={() => setIsSidebarOpen(false)}
-                    >
-                      <item.icon size={20} />
-                      {item.label}
-                    </NavLink>
-                  </NavItem>
-                ))}
-              </NavList>
-            </NavSection>
-          ))}
+          {navItems
+            .filter((section) => {
+              // Hide super admin only sections from regular admins
+              if ('superAdminOnly' in section && section.superAdminOnly && !permissions.isSuperAdmin) {
+                return false;
+              }
+              return true;
+            })
+            .map((section) => {
+              // Filter items based on permissions
+              const visibleItems = section.items.filter((item) => {
+                if (item.permission === null) return true;
+                return permissions[item.permission];
+              });
+
+              // Don't render section if no visible items
+              if (visibleItems.length === 0) return null;
+
+              return (
+                <NavSection key={section.section}>
+                  <NavSectionTitle>{section.section}</NavSectionTitle>
+                  <NavList>
+                    {visibleItems.map((item) => (
+                      <NavItem key={item.path}>
+                        <NavLink
+                          to={item.path}
+                          $isActive={location.pathname === item.path}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <item.icon size={20} />
+                          {item.label}
+                        </NavLink>
+                      </NavItem>
+                    ))}
+                  </NavList>
+                </NavSection>
+              );
+            })}
         </SidebarNav>
 
         <SidebarFooter>
@@ -393,7 +427,7 @@ export const AdminLayout = () => {
               <UserName>
                 {user?.firstName} {user?.lastName}
               </UserName>
-              <UserRole>Administrator</UserRole>
+              <UserRole>{permissions.isSuperAdmin ? 'Super Admin' : 'Administrator'}</UserRole>
             </UserDetails>
           </UserInfo>
           <LogoutButton onClick={handleLogout}>

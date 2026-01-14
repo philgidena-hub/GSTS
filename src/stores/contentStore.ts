@@ -12,6 +12,7 @@ import type {
   ContactInfo,
   FAQ,
   SiteSettings,
+  Partner,
 } from '../types';
 
 // Default content data (used as fallback when Firebase is empty or unavailable)
@@ -328,6 +329,33 @@ const defaultFAQs: FAQ[] = [
   },
 ];
 
+const defaultPartners: Partner[] = [
+  {
+    id: 'partner-1',
+    name: 'Mekelle University',
+    logo: '/partner logos/mu_logo_mini.png',
+    order: 1,
+  },
+  {
+    id: 'partner-2',
+    name: 'Adigrat University',
+    logo: '/partner logos/Adigrat_Uni-removebg-preview-1.png',
+    order: 2,
+  },
+  {
+    id: 'partner-3',
+    name: 'Axum University',
+    logo: '/partner logos/Axum university.png',
+    order: 3,
+  },
+  {
+    id: 'partner-4',
+    name: 'Tigray Development Association',
+    logo: '/partner logos/cropped-Site_Logo-removebg-preview.png',
+    order: 4,
+  },
+];
+
 const defaultSettings: SiteSettings = {
   siteName: 'GSTS',
   tagline: 'Global Society of Tigray Scholars and Professionals',
@@ -360,6 +388,7 @@ interface ContentState {
   contactInfo: ContactInfo;
   faqs: FAQ[];
   settings: SiteSettings;
+  partners: Partner[];
 
   // Loading and error states
   isLoading: boolean;
@@ -412,6 +441,11 @@ interface ContentState {
   // Settings Actions
   updateSettings: (settings: Partial<SiteSettings>) => Promise<void>;
 
+  // Partner Actions
+  updatePartner: (id: string, partner: Partial<Partner>) => Promise<void>;
+  addPartner: (partner: Omit<Partner, 'id'>) => Promise<string>;
+  deletePartner: (id: string) => Promise<void>;
+
   // Utility Actions
   resetToDefaults: () => void;
   setError: (error: string | null) => void;
@@ -434,14 +468,15 @@ export const useContentStore = create<ContentState>()(
       contactInfo: defaultContactInfo,
       faqs: defaultFAQs,
       settings: defaultSettings,
+      partners: defaultPartners,
       isLoading: false,
       error: null,
       isInitialized: false,
 
-      // Initialize content from Firebase
+      // Initialize content from Firebase - always fetch fresh data
       initializeContent: async () => {
-        if (get().isInitialized) return;
-
+        // Remove the isInitialized check so we always fetch fresh data from Firebase
+        // This ensures admin edits are immediately reflected on the main site
         set({ isLoading: true, error: null });
 
         try {
@@ -457,6 +492,7 @@ export const useContentStore = create<ContentState>()(
             contactData,
             faqsData,
             settingsData,
+            partnersData,
           ] = await Promise.all([
             contentService.getHeroContent().catch(() => null),
             contentService.getAboutContent().catch(() => null),
@@ -468,6 +504,7 @@ export const useContentStore = create<ContentState>()(
             contentService.getContactInfo().catch(() => null),
             contentService.getFAQs().catch(() => []),
             contentService.getSiteSettings().catch(() => null),
+            contentService.getPartners().catch(() => []),
           ]);
 
           set({
@@ -481,6 +518,7 @@ export const useContentStore = create<ContentState>()(
             contactInfo: contactData || defaultContactInfo,
             faqs: faqsData.length > 0 ? faqsData : defaultFAQs,
             settings: settingsData || defaultSettings,
+            partners: partnersData.length > 0 ? partnersData : defaultPartners,
             isLoading: false,
             isInitialized: true,
           });
@@ -841,6 +879,53 @@ export const useContentStore = create<ContentState>()(
         }
       },
 
+      // Partner Actions
+      updatePartner: async (id, partnerUpdate) => {
+        set({ isLoading: true, error: null });
+        try {
+          await contentService.updatePartner(id, partnerUpdate);
+          set((state) => ({
+            partners: state.partners.map((p) =>
+              p.id === id ? { ...p, ...partnerUpdate } : p
+            ),
+            isLoading: false,
+          }));
+        } catch (error: any) {
+          set({ isLoading: false, error: error.message });
+          throw error;
+        }
+      },
+
+      addPartner: async (partnerData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const id = await contentService.addPartner(partnerData);
+          const newPartner = { ...partnerData, id };
+          set((state) => ({
+            partners: [...state.partners, newPartner],
+            isLoading: false
+          }));
+          return id;
+        } catch (error: any) {
+          set({ isLoading: false, error: error.message });
+          throw error;
+        }
+      },
+
+      deletePartner: async (id) => {
+        set({ isLoading: true, error: null });
+        try {
+          await contentService.deletePartner(id);
+          set((state) => ({
+            partners: state.partners.filter((p) => p.id !== id),
+            isLoading: false,
+          }));
+        } catch (error: any) {
+          set({ isLoading: false, error: error.message });
+          throw error;
+        }
+      },
+
       // Reset to defaults (local only)
       resetToDefaults: () =>
         set({
@@ -854,6 +939,7 @@ export const useContentStore = create<ContentState>()(
           contactInfo: defaultContactInfo,
           faqs: defaultFAQs,
           settings: defaultSettings,
+          partners: defaultPartners,
           error: null,
         }),
 
@@ -884,6 +970,7 @@ export const useContentStore = create<ContentState>()(
         contactInfo: state.contactInfo,
         faqs: state.faqs,
         settings: state.settings,
+        partners: state.partners,
         isInitialized: state.isInitialized,
       }),
     }

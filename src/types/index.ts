@@ -1,4 +1,12 @@
 // Content Types
+export interface Partner {
+  id: string;
+  name: string;
+  logo: string;
+  website?: string;
+  order?: number;
+}
+
 export interface HeroContent {
   id: string;
   title: string;
@@ -154,15 +162,111 @@ export interface MembershipApplication {
 }
 
 // User & Auth Types
+export type UserRole = 'super_admin' | 'admin' | 'member' | 'guest';
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'member' | 'guest';
+  role: UserRole;
   avatar?: string;
   createdAt: string;
+  isDisabled?: boolean;
 }
+
+// Role-based permissions
+export interface RolePermissions {
+  // Content management
+  canEditHero: boolean;
+  canEditAbout: boolean;
+  canEditServices: boolean;
+  canEditProjects: boolean;
+  canEditBlog: boolean;
+  canEditTeam: boolean;
+  canEditPartners: boolean;
+  canEditStatistics: boolean;
+  canEditFAQs: boolean;
+  canEditSettings: boolean;
+  // Membership management
+  canManageMembers: boolean;
+  canManageApplications: boolean;
+  canViewMessages: boolean;
+  // User management (super_admin only)
+  canManageUsers: boolean;
+  canManageAdmins: boolean;
+}
+
+export const rolePermissions: Record<UserRole, RolePermissions> = {
+  super_admin: {
+    canEditHero: true,
+    canEditAbout: true,
+    canEditServices: true,
+    canEditProjects: true,
+    canEditBlog: true,
+    canEditTeam: true,
+    canEditPartners: true,
+    canEditStatistics: true,
+    canEditFAQs: true,
+    canEditSettings: true,
+    canManageMembers: true,
+    canManageApplications: true,
+    canViewMessages: true,
+    canManageUsers: true,
+    canManageAdmins: true,
+  },
+  admin: {
+    canEditHero: false,
+    canEditAbout: false,
+    canEditServices: false,
+    canEditProjects: true,
+    canEditBlog: true,
+    canEditTeam: false,
+    canEditPartners: false,
+    canEditStatistics: false,
+    canEditFAQs: true,
+    canEditSettings: false,
+    canManageMembers: true,
+    canManageApplications: true,
+    canViewMessages: true,
+    canManageUsers: false,
+    canManageAdmins: false,
+  },
+  member: {
+    canEditHero: false,
+    canEditAbout: false,
+    canEditServices: false,
+    canEditProjects: false,
+    canEditBlog: false,
+    canEditTeam: false,
+    canEditPartners: false,
+    canEditStatistics: false,
+    canEditFAQs: false,
+    canEditSettings: false,
+    canManageMembers: false,
+    canManageApplications: false,
+    canViewMessages: false,
+    canManageUsers: false,
+    canManageAdmins: false,
+  },
+  guest: {
+    canEditHero: false,
+    canEditAbout: false,
+    canEditServices: false,
+    canEditProjects: false,
+    canEditBlog: false,
+    canEditTeam: false,
+    canEditPartners: false,
+    canEditStatistics: false,
+    canEditFAQs: false,
+    canEditSettings: false,
+    canManageMembers: false,
+    canManageApplications: false,
+    canViewMessages: false,
+    canManageUsers: false,
+    canManageAdmins: false,
+  },
+};
 
 export interface AuthState {
   user: User | null;

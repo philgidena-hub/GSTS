@@ -18,6 +18,8 @@ import {
   ServicesManager,
   StatisticsManager,
   FAQManager,
+  PartnersManager,
+  UsersManager,
 } from './pages/admin';
 import { SetupAdmin } from './pages/admin/SetupAdmin';
 import { useAuthStore } from './stores/authStore';
@@ -26,7 +28,7 @@ import { useContentStore } from './stores/contentStore';
 // import { CustomCursor } from './components/cursor';
 import { PageTransition } from './components/transitions';
 
-// Protected Route wrapper
+// Protected Route wrapper - allows both super_admin and admin roles
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user } = useAuthStore();
 
@@ -34,8 +36,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.role !== 'admin') {
+  // Allow super_admin and admin roles
+  if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     return <Navigate to="/" replace />;
+  }
+
+  // Check if user is disabled
+  if (user?.isDisabled) {
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
@@ -45,11 +53,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  if (isAuthenticated && user?.role === 'admin') {
+  if (isAuthenticated && (user?.role === 'admin' || user?.role === 'super_admin')) {
     return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
+};
+
+// Scroll to top on route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
 };
 
 // Animated Routes component
@@ -57,8 +76,10 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <>
+      <ScrollToTop />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route
           path="/"
@@ -178,6 +199,8 @@ const AnimatedRoutes = () => {
           <Route path="settings" element={<SiteSettings />} />
           <Route path="statistics" element={<StatisticsManager />} />
           <Route path="faqs" element={<FAQManager />} />
+          <Route path="partners" element={<PartnersManager />} />
+          <Route path="users" element={<UsersManager />} />
           <Route path="analytics" element={<Dashboard />} />
         </Route>
 
@@ -185,6 +208,7 @@ const AnimatedRoutes = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
+    </>
   );
 };
 

@@ -10,10 +10,12 @@ import {
   Send,
   MessageSquare,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { useContentStore } from '../../stores/contentStore';
+import { membershipService } from '../../services/membership.service';
 
 const ContactSection = styled.section`
   position: relative;
@@ -276,6 +278,19 @@ const SuccessMessage = styled(motion.div)`
   margin-bottom: 1.5rem;
 `;
 
+const ErrorMessage = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  color: #dc2626;
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+`;
+
 export const Contact = () => {
   const { contactInfo } = useContentStore();
   const [ref, inView] = useInView({
@@ -292,6 +307,7 @@ export const Contact = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -305,22 +321,35 @@ export const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Submit to Firebase
+      await membershipService.submitContactForm({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        subject: formData.subject,
+        message: formData.message,
+      });
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
+      setIsSuccess(true);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
 
-    // Reset success message after 5 seconds
-    setTimeout(() => setIsSuccess(false), 5000);
+      // Reset success message after 5 seconds
+      setTimeout(() => setIsSuccess(false), 5000);
+    } catch (error: any) {
+      console.error('Error submitting contact form:', error);
+      setSubmitError(error.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -480,6 +509,16 @@ export const Contact = () => {
                   Thank you for your message! We'll get back to you soon.
                 </span>
               </SuccessMessage>
+            )}
+
+            {submitError && (
+              <ErrorMessage
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertCircle size={18} />
+                <span>{submitError}</span>
+              </ErrorMessage>
             )}
 
             <FormGrid>

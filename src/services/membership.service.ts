@@ -157,20 +157,26 @@ export const membershipService = {
     const plan = await this.getPlanById(data.planId);
     const planName = plan?.name || 'Membership';
 
+    // Extract name for email (use fullName or firstName/lastName)
+    const displayName = data.fullName || `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Applicant';
+    const nameParts = displayName.split(' ');
+    const firstName = nameParts[0] || 'Applicant';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     // Send confirmation email to applicant
     try {
       await emailService.sendApplicationSubmittedEmail(data.email, {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName,
+        lastName,
         planName,
       });
 
       // Notify admins about new application
       await emailService.sendNewApplicationNotification(ADMIN_NOTIFICATION_EMAILS, {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName,
+        lastName,
         email: data.email,
-        profession: data.profession,
+        profession: data.professionalCareerStatus || data.profession || 'Not specified',
         planName,
       });
     } catch (emailError) {
@@ -201,19 +207,38 @@ export const membershipService = {
       reviewedBy,
     });
 
-    // Create new member with expiry date
+    // Extract name parts from fullName or use legacy fields
+    const displayName = application.fullName || `${application.firstName || ''} ${application.lastName || ''}`.trim();
+    const nameParts = displayName.split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Create new member with all fields from application
     const memberId = await this.addMember({
       email: application.email,
-      firstName: application.firstName,
-      lastName: application.lastName,
-      profession: application.profession,
-      organization: application.organization,
+      fullName: application.fullName || displayName,
+      firstName,
+      lastName,
+      gender: application.gender,
+      academicStatus: application.academicStatus,
+      generalFieldOfStudy: application.generalFieldOfStudy,
+      fieldOfSpecialization: application.fieldOfSpecialization,
+      subFieldOfSpecialization: application.subFieldOfSpecialization,
+      professionalCareerStatus: application.professionalCareerStatus,
+      researchInterest: application.researchInterest,
+      rdTeam: application.rdTeam,
       country: application.country,
+      organization: application.organization,
+      phone: application.phone,
+      orcidScopusId: application.orcidScopusId,
+      skypeAddress: application.skypeAddress,
+      activitiesExperiences: application.activitiesExperiences,
+      comments: application.comments,
       membershipPlanId: application.planId,
       membershipStatus: 'active',
       joinedDate: new Date().toISOString(),
       expiryDate,
-      expertise: application.expertise,
+      expertise: application.expertise || [],
     });
 
     // Send approval email
@@ -221,8 +246,8 @@ export const membershipService = {
       const planName = plan?.name || 'Membership';
 
       await emailService.sendApplicationApprovedEmail(application.email, {
-        firstName: application.firstName,
-        lastName: application.lastName,
+        firstName,
+        lastName,
         planName,
       });
     } catch (emailError) {
@@ -313,12 +338,13 @@ export const membershipService = {
 
         // Send expiry notification email
         try {
+          const memberName = member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Member';
           await emailService.sendEmail(
             member.email,
             'Your GSTS Membership Has Expired',
             `
               <h2>Membership Expired</h2>
-              <p>Dear ${member.firstName} ${member.lastName},</p>
+              <p>Dear ${memberName},</p>
               <p>Your GSTS membership has expired. To continue enjoying member benefits, please renew your membership.</p>
               <p>Visit our website to renew your membership today.</p>
             `
@@ -349,9 +375,14 @@ export const membershipService = {
     // Send rejection email
     if (application) {
       try {
+        const displayName = application.fullName || `${application.firstName || ''} ${application.lastName || ''}`.trim();
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || 'Applicant';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
         await emailService.sendApplicationRejectedEmail(application.email, {
-          firstName: application.firstName,
-          lastName: application.lastName,
+          firstName,
+          lastName,
           notes,
         });
       } catch (emailError) {

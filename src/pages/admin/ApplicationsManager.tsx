@@ -13,6 +13,8 @@ import {
   CreditCard,
   DollarSign,
   Download,
+  GraduationCap,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
@@ -334,6 +336,16 @@ const PlanBadge = styled.span`
   color: var(--color-primary-600);
 `;
 
+const GenderBadge = styled.span<{ $gender: 'M' | 'F' }>`
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  background: ${({ $gender }) => $gender === 'M' ? '#dbeafe' : '#fce7f3'};
+  color: ${({ $gender }) => $gender === 'M' ? '#1d4ed8' : '#be185d'};
+`;
+
 const Actions = styled.div`
   display: flex;
   gap: 0.5rem;
@@ -370,11 +382,35 @@ const ActionButton = styled.button<{ $variant: 'view' | 'approve' | 'reject' }>`
 
 const ModalContent = styled.div``;
 
+const DetailSection = styled.div`
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-neutral-100);
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+`;
+
+const DetailSectionTitle = styled.h4`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  svg {
+    color: var(--color-primary-600);
+  }
+`;
+
 const DetailGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -393,7 +429,7 @@ const DetailLabel = styled.div`
 `;
 
 const DetailValue = styled.div`
-  font-size: 1rem;
+  font-size: 0.9375rem;
   color: var(--color-neutral-900);
 `;
 
@@ -440,7 +476,6 @@ const PaymentInfo = styled.div`
   background: var(--color-neutral-50);
   padding: 1rem;
   border-radius: var(--radius-lg);
-  margin-bottom: 1.5rem;
 `;
 
 const PaymentInfoRow = styled.div`
@@ -482,9 +517,9 @@ export const ApplicationsManager = () => {
   }, [fetchApplications]);
 
   const filteredApplications = applications.filter((app) => {
+    const displayName = app.fullName || `${app.firstName || ''} ${app.lastName || ''}`.trim();
     const matchesSearch =
-      app.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -505,6 +540,19 @@ export const ApplicationsManager = () => {
   const getPlanPrice = (planId: string): number => {
     const plan = plans.find(p => p.id === planId);
     return plan?.price || 0;
+  };
+
+  const getDisplayName = (app: typeof applications[0]): string => {
+    return app.fullName || `${app.firstName || ''} ${app.lastName || ''}`.trim() || 'N/A';
+  };
+
+  const getInitials = (app: typeof applications[0]): string => {
+    const name = getDisplayName(app);
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   const handleApprove = async (id: string) => {
@@ -544,13 +592,16 @@ export const ApplicationsManager = () => {
 
   // Export applications to CSV
   const handleExport = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Profession', 'Organization', 'Country', 'Plan', 'Payment Status', 'Status', 'Submitted Date'];
+    const headers = ['Full Name', 'Gender', 'Email', 'Phone', 'Academic Status', 'Field of Study', 'Specialization', 'R&D Team', 'Organization', 'Country', 'Plan', 'Payment Status', 'Status', 'Submitted Date'];
     const rows = filteredApplications.map(app => [
-      app.firstName,
-      app.lastName,
+      getDisplayName(app),
+      app.gender || 'N/A',
       app.email,
       app.phone || '',
-      app.profession,
+      app.academicStatus || app.profession || '',
+      app.generalFieldOfStudy || '',
+      app.fieldOfSpecialization || '',
+      app.rdTeam || '',
       app.organization || '',
       app.country,
       getPlanName(app.planId),
@@ -656,9 +707,9 @@ export const ApplicationsManager = () => {
       <Table>
         <TableHeader>
           <div>Applicant</div>
-          <div>Plan</div>
+          <div>Academic Status</div>
+          <div>R&D Team</div>
           <div>Payment</div>
-          <div>Country</div>
           <div>Status</div>
           <div>Actions</div>
         </TableHeader>
@@ -673,18 +724,21 @@ export const ApplicationsManager = () => {
             <TableRow key={app.id}>
               <ApplicantInfo>
                 <Avatar>
-                  {app.firstName[0]}
-                  {app.lastName[0]}
+                  {getInitials(app)}
                 </Avatar>
                 <ApplicantDetails>
                   <ApplicantName>
-                    {app.firstName} {app.lastName}
+                    {getDisplayName(app)}
+                    {app.gender && <GenderBadge $gender={app.gender} style={{ marginLeft: '0.5rem' }}>{app.gender}</GenderBadge>}
                   </ApplicantName>
                   <ApplicantEmail>{app.email}</ApplicantEmail>
                 </ApplicantDetails>
               </ApplicantInfo>
               <Cell>
-                <PlanBadge>{getPlanName(app.planId)}</PlanBadge>
+                <span style={{ fontSize: '0.8125rem' }}>{app.academicStatus || app.profession || 'N/A'}</span>
+              </Cell>
+              <Cell>
+                <span style={{ fontSize: '0.8125rem' }}>{app.rdTeam ? (app.rdTeam.length > 25 ? app.rdTeam.slice(0, 25) + '...' : app.rdTeam) : 'N/A'}</span>
               </Cell>
               <Cell>
                 <PaymentBadge $status={getPaymentStatus(app)}>
@@ -692,7 +746,6 @@ export const ApplicationsManager = () => {
                   {getPaymentStatus(app)}
                 </PaymentBadge>
               </Cell>
-              <Cell>{app.country}</Cell>
               <Cell>
                 <StatusBadge $status={app.status}>
                   {app.status === 'pending' ? (
@@ -749,97 +802,209 @@ export const ApplicationsManager = () => {
       >
         {currentApplication && (
           <ModalContent>
-            <DetailGrid>
-              <DetailItem>
-                <DetailLabel>Full Name</DetailLabel>
-                <DetailValue>
-                  {currentApplication.firstName} {currentApplication.lastName}
-                </DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Email</DetailLabel>
-                <DetailValue>{currentApplication.email}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Phone</DetailLabel>
-                <DetailValue>{currentApplication.phone || 'N/A'}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Profession</DetailLabel>
-                <DetailValue>{currentApplication.profession}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Organization</DetailLabel>
-                <DetailValue>{currentApplication.organization || 'N/A'}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Country</DetailLabel>
-                <DetailValue>{currentApplication.country}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Status</DetailLabel>
-                <StatusBadge $status={currentApplication.status}>
-                  {currentApplication.status}
-                </StatusBadge>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>Submitted</DetailLabel>
-                <DetailValue>
-                  {formatDate(currentApplication.submittedAt)}
-                </DetailValue>
-              </DetailItem>
-            </DetailGrid>
+            {/* Personal Information */}
+            <DetailSection>
+              <DetailSectionTitle>
+                <User size={16} />
+                Personal Information
+              </DetailSectionTitle>
+              <DetailGrid>
+                <DetailItem>
+                  <DetailLabel>Full Name</DetailLabel>
+                  <DetailValue>{getDisplayName(currentApplication)}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Gender</DetailLabel>
+                  <DetailValue>
+                    {currentApplication.gender ? (
+                      <GenderBadge $gender={currentApplication.gender}>
+                        {currentApplication.gender === 'M' ? 'Male' : 'Female'}
+                      </GenderBadge>
+                    ) : 'N/A'}
+                  </DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Email</DetailLabel>
+                  <DetailValue>{currentApplication.email}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Phone</DetailLabel>
+                  <DetailValue>{currentApplication.phone || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Country</DetailLabel>
+                  <DetailValue>{currentApplication.country}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Organization</DetailLabel>
+                  <DetailValue>{currentApplication.organization || 'N/A'}</DetailValue>
+                </DetailItem>
+              </DetailGrid>
+            </DetailSection>
+
+            {/* Academic & Professional Information */}
+            <DetailSection>
+              <DetailSectionTitle>
+                <GraduationCap size={16} />
+                Academic & Professional Information
+              </DetailSectionTitle>
+              <DetailGrid>
+                <DetailItem>
+                  <DetailLabel>Academic Status</DetailLabel>
+                  <DetailValue>{currentApplication.academicStatus || currentApplication.profession || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>General Field of Study</DetailLabel>
+                  <DetailValue>{currentApplication.generalFieldOfStudy || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Field of Specialization</DetailLabel>
+                  <DetailValue>{currentApplication.fieldOfSpecialization || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Sub-Field of Specialization</DetailLabel>
+                  <DetailValue>{currentApplication.subFieldOfSpecialization || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>Professional Career Status</DetailLabel>
+                  <DetailValue>{currentApplication.professionalCareerStatus || 'N/A'}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>R&D Team</DetailLabel>
+                  <DetailValue>{currentApplication.rdTeam || 'N/A'}</DetailValue>
+                </DetailItem>
+              </DetailGrid>
+
+              {currentApplication.researchInterest && (
+                <DetailItem style={{ marginTop: '1rem' }}>
+                  <DetailLabel>Research/Business Interest</DetailLabel>
+                  <MotivationText>{currentApplication.researchInterest}</MotivationText>
+                </DetailItem>
+              )}
+            </DetailSection>
+
+            {/* Additional Contact Info */}
+            {(currentApplication.orcidScopusId || currentApplication.skypeAddress) && (
+              <DetailSection>
+                <DetailSectionTitle>
+                  <Briefcase size={16} />
+                  Additional Information
+                </DetailSectionTitle>
+                <DetailGrid>
+                  {currentApplication.orcidScopusId && (
+                    <DetailItem>
+                      <DetailLabel>ORCID/Scopus ID</DetailLabel>
+                      <DetailValue>{currentApplication.orcidScopusId}</DetailValue>
+                    </DetailItem>
+                  )}
+                  {currentApplication.skypeAddress && (
+                    <DetailItem>
+                      <DetailLabel>Skype Address</DetailLabel>
+                      <DetailValue>{currentApplication.skypeAddress}</DetailValue>
+                    </DetailItem>
+                  )}
+                </DetailGrid>
+              </DetailSection>
+            )}
+
+            {/* Activities & Experiences */}
+            {currentApplication.activitiesExperiences && (
+              <DetailSection>
+                <DetailItem>
+                  <DetailLabel>Activities, Experiences & Skills</DetailLabel>
+                  <MotivationText>{currentApplication.activitiesExperiences}</MotivationText>
+                </DetailItem>
+              </DetailSection>
+            )}
+
+            {/* Legacy expertise field */}
+            {currentApplication.expertise && currentApplication.expertise.length > 0 && (
+              <DetailSection>
+                <DetailItem>
+                  <DetailLabel>Expertise</DetailLabel>
+                  <ExpertiseList>
+                    {currentApplication.expertise.map((exp, index) => (
+                      <ExpertiseTag key={index}>{exp}</ExpertiseTag>
+                    ))}
+                  </ExpertiseList>
+                </DetailItem>
+              </DetailSection>
+            )}
+
+            {/* Legacy motivation field */}
+            {currentApplication.motivation && (
+              <DetailSection>
+                <DetailItem>
+                  <DetailLabel>Motivation</DetailLabel>
+                  <MotivationText>{currentApplication.motivation}</MotivationText>
+                </DetailItem>
+              </DetailSection>
+            )}
+
+            {/* Comments */}
+            {currentApplication.comments && (
+              <DetailSection>
+                <DetailItem>
+                  <DetailLabel>Comments</DetailLabel>
+                  <MotivationText>{currentApplication.comments}</MotivationText>
+                </DetailItem>
+              </DetailSection>
+            )}
 
             {/* Payment & Plan Info */}
-            <PaymentInfo>
-              <PaymentInfoRow>
-                <PaymentInfoLabel>Membership Plan</PaymentInfoLabel>
-                <PlanBadge>{getPlanName(currentApplication.planId)}</PlanBadge>
-              </PaymentInfoRow>
-              <PaymentInfoRow>
-                <PaymentInfoLabel>Plan Price</PaymentInfoLabel>
-                <PaymentInfoValue>
-                  {getPlanPrice(currentApplication.planId) === 0
-                    ? 'Free'
-                    : `$${getPlanPrice(currentApplication.planId)}`}
-                </PaymentInfoValue>
-              </PaymentInfoRow>
-              <PaymentInfoRow>
-                <PaymentInfoLabel>Payment Status</PaymentInfoLabel>
-                <PaymentBadge $status={getPaymentStatus(currentApplication)}>
-                  <CreditCard size={12} />
-                  {getPaymentStatus(currentApplication)}
-                </PaymentBadge>
-              </PaymentInfoRow>
-              {currentApplication.paymentCompletedAt && (
+            <DetailSection>
+              <DetailSectionTitle>
+                <CreditCard size={16} />
+                Membership & Payment
+              </DetailSectionTitle>
+              <PaymentInfo>
                 <PaymentInfoRow>
-                  <PaymentInfoLabel>Payment Date</PaymentInfoLabel>
+                  <PaymentInfoLabel>Membership Plan</PaymentInfoLabel>
+                  <PlanBadge>{getPlanName(currentApplication.planId)}</PlanBadge>
+                </PaymentInfoRow>
+                <PaymentInfoRow>
+                  <PaymentInfoLabel>Plan Price</PaymentInfoLabel>
                   <PaymentInfoValue>
-                    {formatDate(currentApplication.paymentCompletedAt)}
+                    {getPlanPrice(currentApplication.planId) === 0
+                      ? 'Free'
+                      : `$${getPlanPrice(currentApplication.planId)}`}
                   </PaymentInfoValue>
                 </PaymentInfoRow>
-              )}
-            </PaymentInfo>
-
-            <DetailItem style={{ marginBottom: '1.5rem' }}>
-              <DetailLabel>Expertise</DetailLabel>
-              <ExpertiseList>
-                {currentApplication.expertise.map((exp, index) => (
-                  <ExpertiseTag key={index}>{exp}</ExpertiseTag>
-                ))}
-              </ExpertiseList>
-            </DetailItem>
-
-            <DetailItem>
-              <DetailLabel>Motivation</DetailLabel>
-              <MotivationText>{currentApplication.motivation}</MotivationText>
-            </DetailItem>
+                <PaymentInfoRow>
+                  <PaymentInfoLabel>Payment Status</PaymentInfoLabel>
+                  <PaymentBadge $status={getPaymentStatus(currentApplication)}>
+                    <CreditCard size={12} />
+                    {getPaymentStatus(currentApplication)}
+                  </PaymentBadge>
+                </PaymentInfoRow>
+                {currentApplication.paymentCompletedAt && (
+                  <PaymentInfoRow>
+                    <PaymentInfoLabel>Payment Date</PaymentInfoLabel>
+                    <PaymentInfoValue>
+                      {formatDate(currentApplication.paymentCompletedAt)}
+                    </PaymentInfoValue>
+                  </PaymentInfoRow>
+                )}
+                <PaymentInfoRow>
+                  <PaymentInfoLabel>Application Status</PaymentInfoLabel>
+                  <StatusBadge $status={currentApplication.status}>
+                    {currentApplication.status}
+                  </StatusBadge>
+                </PaymentInfoRow>
+                <PaymentInfoRow>
+                  <PaymentInfoLabel>Submitted</PaymentInfoLabel>
+                  <PaymentInfoValue>{formatDate(currentApplication.submittedAt)}</PaymentInfoValue>
+                </PaymentInfoRow>
+              </PaymentInfo>
+            </DetailSection>
 
             {currentApplication.notes && (
-              <DetailItem style={{ marginTop: '1.5rem' }}>
-                <DetailLabel>Review Notes</DetailLabel>
-                <MotivationText>{currentApplication.notes}</MotivationText>
-              </DetailItem>
+              <DetailSection>
+                <DetailItem>
+                  <DetailLabel>Review Notes</DetailLabel>
+                  <MotivationText>{currentApplication.notes}</MotivationText>
+                </DetailItem>
+              </DetailSection>
             )}
 
             {currentApplication.reviewedBy && (

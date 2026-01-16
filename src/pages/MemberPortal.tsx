@@ -269,6 +269,21 @@ export const MemberPortal = () => {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Helper to get display name from member
+  const getDisplayName = (m: Member): string => {
+    return m.fullName || `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'N/A';
+  };
+
+  // Helper to get initials from member
+  const getInitials = (m: Member): string => {
+    const name = getDisplayName(m);
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   useEffect(() => {
     const fetchMemberData = async () => {
       if (!user?.email) {
@@ -415,11 +430,10 @@ export const MemberPortal = () => {
         <Grid>
           <ProfileCard>
             <Avatar>
-              {member.firstName?.[0] || '?'}
-              {member.lastName?.[0] || ''}
+              {getInitials(member)}
             </Avatar>
             <MemberName>
-              {member.firstName} {member.lastName}
+              {getDisplayName(member)}
             </MemberName>
             <MemberEmail>{member.email}</MemberEmail>
             <StatusBadge $status={member.membershipStatus}>
@@ -472,8 +486,24 @@ export const MemberPortal = () => {
               </InfoCardTitle>
               <InfoGrid>
                 <InfoItem>
-                  <InfoLabel>Profession</InfoLabel>
-                  <InfoValue>{member.profession || 'Not specified'}</InfoValue>
+                  <InfoLabel>Academic Status</InfoLabel>
+                  <InfoValue>{member.academicStatus || 'Not specified'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Professional Status</InfoLabel>
+                  <InfoValue>{member.professionalCareerStatus || 'Not specified'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Field of Study</InfoLabel>
+                  <InfoValue>{member.generalFieldOfStudy || 'Not specified'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Specialization</InfoLabel>
+                  <InfoValue>{member.fieldOfSpecialization || 'Not specified'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>R&D Team</InfoLabel>
+                  <InfoValue>{member.rdTeam || 'Not specified'}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>Organization</InfoLabel>
@@ -496,6 +526,13 @@ export const MemberPortal = () => {
                   </InfoValue>
                 </InfoItem>
               </InfoGrid>
+
+              {member.researchInterest && (
+                <div style={{ marginTop: '1.5rem' }}>
+                  <InfoLabel>Research Interest</InfoLabel>
+                  <InfoValue>{member.researchInterest}</InfoValue>
+                </div>
+              )}
 
               {member.bio && (
                 <div style={{ marginTop: '1.5rem' }}>

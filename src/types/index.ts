@@ -123,11 +123,26 @@ export interface MembershipPlan {
 export interface Member {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  profession: string;
-  organization: string;
+  fullName: string;
+  // Keep legacy fields for backwards compatibility
+  firstName?: string;
+  lastName?: string;
+  gender: 'M' | 'F';
+  academicStatus: string;
+  generalFieldOfStudy: string;
+  fieldOfSpecialization: string;
+  subFieldOfSpecialization: string;
+  professionalCareerStatus: string;
+  researchInterest?: string;
+  rdTeam: string;
   country: string;
+  organization: string;
+  phone: string;
+  orcidScopusId?: string;
+  skypeAddress?: string;
+  activitiesExperiences?: string;
+  comments?: string;
+  // Membership fields
   membershipPlanId: string;
   membershipStatus: 'active' | 'pending' | 'expired' | 'cancelled';
   joinedDate: string;
@@ -144,15 +159,30 @@ export interface Member {
 
 export interface MembershipApplication {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  gender: 'M' | 'F';
+  academicStatus: string;
+  generalFieldOfStudy: string;
+  fieldOfSpecialization: string;
+  subFieldOfSpecialization: string;
+  professionalCareerStatus: string;
+  researchInterest?: string;
+  rdTeam: string;
+  country: string;
+  organization: string;
   email: string;
   phone: string;
-  profession: string;
-  organization: string;
-  country: string;
-  expertise: string[];
-  motivation: string;
+  orcidScopusId?: string;
+  skypeAddress?: string;
+  activitiesExperiences?: string;
+  comments?: string;
+  // Legacy fields for backwards compatibility
+  firstName?: string;
+  lastName?: string;
+  profession?: string;
+  expertise?: string[];
+  motivation?: string;
+  // Plan and status fields
   planId: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;

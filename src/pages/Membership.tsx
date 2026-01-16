@@ -296,6 +296,24 @@ const FormRow = styled.div`
   margin-bottom: 1.5rem;
 `;
 
+const FormSection = styled.div`
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-neutral-100);
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+  }
+`;
+
+const FormSectionTitle = styled.h4`
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin-bottom: 1rem;
+`;
+
 const SelectWrapper = styled.div`
   position: relative;
 `;
@@ -329,6 +347,27 @@ const SelectLabel = styled.label`
   font-weight: 500;
   color: var(--color-neutral-700);
   margin-bottom: 0.5rem;
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+`;
+
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--color-neutral-700);
+
+  input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
 `;
 
 const SuccessContent = styled.div`
@@ -422,6 +461,73 @@ const benefits = [
   },
 ];
 
+// Academic status options from the Google Form
+const academicStatusOptions = [
+  'Diploma/Technic/Vocational Training',
+  'Bachelor Degree Student',
+  'Bachelor Degree Graduate',
+  'Master Degree Student',
+  'Master Degree Graduate',
+  'MD/DVM Graduate',
+  'PhD Student',
+  'PhD Graduate',
+  'PhD Graduate (with Postdoctoral experience)',
+  'Professor',
+  'PharmD',
+  'Other with special technical and operational skills',
+];
+
+// R&D Teams from the Google Form
+const rdTeamOptions = [
+  'Agricultural Production Enhancement',
+  'Forests and Agroforests Management',
+  'Livestock Production Systems Development',
+  'Fishery and Aquatic Sciences Development',
+  'Water Resources Management and Development',
+  'Education System Development',
+  'Health System Development',
+  'ICT Development',
+  'Energy Systems Development',
+  'Industrial and Manufacturing Development',
+  'Mining and Extractive Industries Development',
+  'Trade and Commerce Development',
+  'Financial Systems Development',
+  'Transport and Logistics Development',
+  'Construction and Urban Development',
+  'Governance and Public Administration',
+  'Peace and Security',
+  'Justice and Legal System',
+  'Human Rights and Social Justice',
+  'Gender and Social Inclusion',
+  'Youth and Sports Development',
+  'Tourism Development',
+  'History and Archaeology',
+  'Culture and Languages',
+  'Arts and Creative Industries',
+  'Media and Communications',
+  'Environment and Climate Change',
+  'Disaster Risk Management',
+  'Research and Innovation Systems',
+];
+
+// Country list
+const countryOptions = [
+  'Ethiopia',
+  'United States',
+  'United Kingdom',
+  'Canada',
+  'Germany',
+  'Netherlands',
+  'Sweden',
+  'Norway',
+  'Australia',
+  'South Africa',
+  'Kenya',
+  'United Arab Emirates',
+  'Saudi Arabia',
+  'Other',
+];
+
 export const Membership = () => {
   const navigate = useNavigate();
   const { plans, submitApplication, fetchPlans, setError } = useAuthStore();
@@ -433,15 +539,23 @@ export const Membership = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
+    gender: '' as 'M' | 'F' | '',
+    academicStatus: '',
+    generalFieldOfStudy: '',
+    fieldOfSpecialization: '',
+    subFieldOfSpecialization: '',
+    professionalCareerStatus: '',
+    researchInterest: '',
+    rdTeam: '',
+    country: '',
+    organization: '',
     email: '',
     phone: '',
-    profession: '',
-    organization: '',
-    country: '',
-    expertise: '',
-    motivation: '',
+    orcidScopusId: '',
+    skypeAddress: '',
+    activitiesExperiences: '',
+    comments: '',
   });
 
   // Fetch plans from Firebase on component mount
@@ -484,10 +598,25 @@ export const Membership = () => {
     const isPaidPlan = selectedPlanData && selectedPlanData.price > 0;
 
     try {
-      // Submit application first
+      // Submit application
       const applicationId = await submitApplication({
-        ...formData,
-        expertise: formData.expertise.split(',').map((exp) => exp.trim()).filter(Boolean),
+        fullName: formData.fullName,
+        gender: formData.gender as 'M' | 'F',
+        academicStatus: formData.academicStatus,
+        generalFieldOfStudy: formData.generalFieldOfStudy,
+        fieldOfSpecialization: formData.fieldOfSpecialization,
+        subFieldOfSpecialization: formData.subFieldOfSpecialization,
+        professionalCareerStatus: formData.professionalCareerStatus,
+        researchInterest: formData.researchInterest || undefined,
+        rdTeam: formData.rdTeam,
+        country: formData.country,
+        organization: formData.organization,
+        email: formData.email,
+        phone: formData.phone,
+        orcidScopusId: formData.orcidScopusId || undefined,
+        skypeAddress: formData.skypeAddress || undefined,
+        activitiesExperiences: formData.activitiesExperiences || undefined,
+        comments: formData.comments || undefined,
         planId: selectedPlan || plans[0]?.id || 'associate',
       });
 
@@ -511,7 +640,7 @@ export const Membership = () => {
           } else {
             await paymentService.redirectToCheckout(session.sessionId);
           }
-        } catch (paymentError: any) {
+        } catch (paymentError: unknown) {
           // Payment setup failed, but application was submitted
           console.error('Payment processing not available:', paymentError);
           // Redirect to success page anyway - admin will follow up for payment
@@ -521,8 +650,9 @@ export const Membership = () => {
         // Free plan or Stripe not configured - go to success
         setIsSuccess(true);
       }
-    } catch (err: any) {
-      setSubmitError(err.message || 'Failed to submit application. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit application. Please try again.';
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
       setIsProcessingPayment(false);
@@ -534,15 +664,23 @@ export const Membership = () => {
     setIsSuccess(false);
     setSubmitError(null);
     setFormData({
-      firstName: '',
-      lastName: '',
+      fullName: '',
+      gender: '',
+      academicStatus: '',
+      generalFieldOfStudy: '',
+      fieldOfSpecialization: '',
+      subFieldOfSpecialization: '',
+      professionalCareerStatus: '',
+      researchInterest: '',
+      rdTeam: '',
+      country: '',
+      organization: '',
       email: '',
       phone: '',
-      profession: '',
-      organization: '',
-      country: '',
-      expertise: '',
-      motivation: '',
+      orcidScopusId: '',
+      skypeAddress: '',
+      activitiesExperiences: '',
+      comments: '',
     });
   };
 
@@ -658,7 +796,7 @@ export const Membership = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={isSuccess ? undefined : 'Membership Application'}
+        title={isSuccess ? undefined : 'Expertise and Skill Mapping Registration'}
         size="lg"
       >
         {isSuccess ? (
@@ -684,112 +822,238 @@ export const Membership = () => {
                 {submitError}
               </ErrorMessage>
             )}
-            <FormGrid>
-              <Input
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="John"
-                required
-                fullWidth
-              />
-              <Input
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Doe"
-                required
-                fullWidth
-              />
-            </FormGrid>
 
-            <FormGrid>
-              <Input
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="john@example.com"
-                required
-                fullWidth
-              />
-              <Input
-                label="Phone Number"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+1 234 567 8900"
-                fullWidth
-              />
-            </FormGrid>
-
-            <FormGrid>
-              <Input
-                label="Profession"
-                name="profession"
-                value={formData.profession}
-                onChange={handleChange}
-                placeholder="e.g., Software Engineer"
-                required
-                fullWidth
-              />
-              <Input
-                label="Organization"
-                name="organization"
-                value={formData.organization}
-                onChange={handleChange}
-                placeholder="Your company or institution"
-                fullWidth
-              />
-            </FormGrid>
-
-            <FormRow>
-              <SelectWrapper>
-                <SelectLabel>Country</SelectLabel>
-                <Select
-                  name="country"
-                  value={formData.country}
+            {/* Personal Information Section */}
+            <FormSection>
+              <FormSectionTitle>Personal Information</FormSectionTitle>
+              <FormRow>
+                <Input
+                  label="Full Name *"
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleChange}
+                  placeholder="Enter your full name"
                   required
-                >
-                  <option value="">Select your country</option>
-                  <option value="Ethiopia">Ethiopia</option>
-                  <option value="USA">United States</option>
-                  <option value="UK">United Kingdom</option>
-                  <option value="Canada">Canada</option>
-                  <option value="Germany">Germany</option>
-                  <option value="Other">Other</option>
-                </Select>
-              </SelectWrapper>
-            </FormRow>
+                  fullWidth
+                />
+              </FormRow>
 
-            <FormRow>
-              <Input
-                label="Areas of Expertise"
-                name="expertise"
-                value={formData.expertise}
-                onChange={handleChange}
-                placeholder="e.g., Education, Healthcare, Technology (comma-separated)"
-                helperText="Enter your expertise areas separated by commas"
-                fullWidth
-              />
-            </FormRow>
+              <FormRow>
+                <SelectLabel>Gender *</SelectLabel>
+                <RadioGroup>
+                  <RadioLabel>
+                    <input
+                      type="radio"
+                      name="gender"
+                      value="M"
+                      checked={formData.gender === 'M'}
+                      onChange={handleChange}
+                      required
+                    />
+                    Male (M)
+                  </RadioLabel>
+                  <RadioLabel>
+                    <input
+                      type="radio"
+                      name="gender"
+                      value="F"
+                      checked={formData.gender === 'F'}
+                      onChange={handleChange}
+                    />
+                    Female (F)
+                  </RadioLabel>
+                </RadioGroup>
+              </FormRow>
+            </FormSection>
 
-            <FormRow>
-              <Textarea
-                label="Motivation"
-                name="motivation"
-                value={formData.motivation}
-                onChange={handleChange}
-                placeholder="Tell us why you want to join GSTS and how you plan to contribute..."
-                required
-                fullWidth
-              />
-            </FormRow>
+            {/* Academic & Professional Information */}
+            <FormSection>
+              <FormSectionTitle>Academic & Professional Information</FormSectionTitle>
+              <FormRow>
+                <SelectWrapper>
+                  <SelectLabel>Your Current Academic Status *</SelectLabel>
+                  <Select
+                    name="academicStatus"
+                    value={formData.academicStatus}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select your academic status</option>
+                    {academicStatusOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </Select>
+                </SelectWrapper>
+              </FormRow>
+
+              <FormGrid>
+                <Input
+                  label="General Field of Study *"
+                  name="generalFieldOfStudy"
+                  value={formData.generalFieldOfStudy}
+                  onChange={handleChange}
+                  placeholder="e.g., Engineering, Medicine, Social Sciences"
+                  required
+                  fullWidth
+                />
+                <Input
+                  label="Field of Specialization *"
+                  name="fieldOfSpecialization"
+                  value={formData.fieldOfSpecialization}
+                  onChange={handleChange}
+                  placeholder="e.g., Computer Science, Public Health"
+                  required
+                  fullWidth
+                />
+              </FormGrid>
+
+              <FormGrid>
+                <Input
+                  label="Sub-Field of Specialization *"
+                  name="subFieldOfSpecialization"
+                  value={formData.subFieldOfSpecialization}
+                  onChange={handleChange}
+                  placeholder="e.g., Machine Learning, Epidemiology"
+                  required
+                  fullWidth
+                />
+                <Input
+                  label="Current Professional Career Status *"
+                  name="professionalCareerStatus"
+                  value={formData.professionalCareerStatus}
+                  onChange={handleChange}
+                  placeholder="e.g., Researcher, Professor, Engineer"
+                  required
+                  fullWidth
+                />
+              </FormGrid>
+
+              <FormRow>
+                <Textarea
+                  label="Your Current/Future Research/Business Interest/Plan"
+                  name="researchInterest"
+                  value={formData.researchInterest}
+                  onChange={handleChange}
+                  placeholder="Describe your research interests or business plans..."
+                  fullWidth
+                />
+              </FormRow>
+
+              <FormRow>
+                <SelectWrapper>
+                  <SelectLabel>Research and Development Team You Would Like to Contribute To *</SelectLabel>
+                  <Select
+                    name="rdTeam"
+                    value={formData.rdTeam}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select a team</option>
+                    {rdTeamOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </Select>
+                </SelectWrapper>
+              </FormRow>
+            </FormSection>
+
+            {/* Contact Information */}
+            <FormSection>
+              <FormSectionTitle>Contact Information</FormSectionTitle>
+              <FormGrid>
+                <SelectWrapper>
+                  <SelectLabel>Current Place of Residence (Country) *</SelectLabel>
+                  <Select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select your country</option>
+                    {countryOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </Select>
+                </SelectWrapper>
+                <Input
+                  label="Current Working Institution/Company *"
+                  name="organization"
+                  value={formData.organization}
+                  onChange={handleChange}
+                  placeholder="Your organization or company name"
+                  required
+                  fullWidth
+                />
+              </FormGrid>
+
+              <FormGrid>
+                <Input
+                  label="Email Address *"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your.email@example.com"
+                  required
+                  fullWidth
+                />
+                <Input
+                  label="Phone Number *"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+1 234 567 8900"
+                  required
+                  fullWidth
+                />
+              </FormGrid>
+
+              <FormGrid>
+                <Input
+                  label="Research ORCID/Scopus ID"
+                  name="orcidScopusId"
+                  value={formData.orcidScopusId}
+                  onChange={handleChange}
+                  placeholder="e.g., 0000-0000-0000-0000"
+                  fullWidth
+                />
+                <Input
+                  label="Skype Address"
+                  name="skypeAddress"
+                  value={formData.skypeAddress}
+                  onChange={handleChange}
+                  placeholder="your.skype.id"
+                  fullWidth
+                />
+              </FormGrid>
+            </FormSection>
+
+            {/* Additional Information */}
+            <FormSection>
+              <FormSectionTitle>Additional Information</FormSectionTitle>
+              <FormRow>
+                <Textarea
+                  label="Activities, Experiences, and Peculiar Skills"
+                  name="activitiesExperiences"
+                  value={formData.activitiesExperiences}
+                  onChange={handleChange}
+                  placeholder="Share your activities, experiences in various capacities, and any peculiar skills you have..."
+                  fullWidth
+                />
+              </FormRow>
+
+              <FormRow>
+                <Textarea
+                  label="Any Comments"
+                  name="comments"
+                  value={formData.comments}
+                  onChange={handleChange}
+                  placeholder="Any additional comments or information..."
+                  fullWidth
+                />
+              </FormRow>
+            </FormSection>
 
             {(() => {
               const selectedPlanData = plans.find((p) => p.id === selectedPlan);

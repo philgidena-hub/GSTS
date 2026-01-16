@@ -486,10 +486,23 @@ export const MembersManager = () => {
     fetchMembers();
   }, [fetchMembers]);
 
+  const getDisplayName = (member: Member): string => {
+    return member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'N/A';
+  };
+
+  const getInitials = (member: Member): string => {
+    const name = getDisplayName(member);
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   const filteredMembers = members.filter((m) => {
+    const displayName = getDisplayName(m);
     const matchesSearch =
-      m.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email.toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchesStatus = true;
@@ -559,12 +572,16 @@ export const MembersManager = () => {
   const handleEditMember = (member: Member) => {
     setSelectedMember(member);
     setEditForm({
-      firstName: member.firstName,
-      lastName: member.lastName,
+      fullName: member.fullName,
       email: member.email,
-      profession: member.profession,
+      gender: member.gender,
+      academicStatus: member.academicStatus,
+      generalFieldOfStudy: member.generalFieldOfStudy,
+      fieldOfSpecialization: member.fieldOfSpecialization,
+      professionalCareerStatus: member.professionalCareerStatus,
       organization: member.organization,
       country: member.country,
+      phone: member.phone,
       bio: member.bio || '',
       membershipStatus: member.membershipStatus,
       social: member.social || {},
@@ -621,12 +638,14 @@ export const MembersManager = () => {
 
   // Export members to CSV
   const handleExport = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Profession', 'Organization', 'Country', 'Plan', 'Status', 'Joined Date', 'Expiry Date'];
+    const headers = ['Full Name', 'Gender', 'Email', 'Phone', 'Academic Status', 'Specialization', 'Organization', 'Country', 'Plan', 'Status', 'Joined Date', 'Expiry Date'];
     const rows = filteredMembers.map(m => [
-      m.firstName,
-      m.lastName,
+      getDisplayName(m),
+      m.gender || 'N/A',
       m.email,
-      m.profession,
+      m.phone || '',
+      m.academicStatus || '',
+      m.fieldOfSpecialization || '',
       m.organization,
       m.country,
       getPlanName(m.membershipPlanId),
@@ -731,14 +750,13 @@ export const MembersManager = () => {
                     <Td>
                       <MemberInfo>
                         <MemberAvatar>
-                          {member.firstName.charAt(0)}
-                          {member.lastName.charAt(0)}
+                          {getInitials(member)}
                         </MemberAvatar>
                         <div>
                           <MemberName>
-                            {member.firstName} {member.lastName}
+                            {getDisplayName(member)}
                           </MemberName>
-                          <MemberEmail>{member.profession || 'N/A'}</MemberEmail>
+                          <MemberEmail>{member.academicStatus || member.professionalCareerStatus || 'N/A'}</MemberEmail>
                         </div>
                       </MemberInfo>
                     </Td>
@@ -862,15 +880,39 @@ export const MembersManager = () => {
             <DetailGrid>
               <DetailItem>
                 <DetailLabel>Full Name</DetailLabel>
-                <DetailValue>{selectedMember.firstName} {selectedMember.lastName}</DetailValue>
+                <DetailValue>{getDisplayName(selectedMember)}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>Email</DetailLabel>
                 <DetailValue>{selectedMember.email}</DetailValue>
               </DetailItem>
               <DetailItem>
-                <DetailLabel>Profession</DetailLabel>
-                <DetailValue>{selectedMember.profession || 'N/A'}</DetailValue>
+                <DetailLabel>Gender</DetailLabel>
+                <DetailValue>{selectedMember.gender === 'M' ? 'Male' : selectedMember.gender === 'F' ? 'Female' : 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Phone</DetailLabel>
+                <DetailValue>{selectedMember.phone || 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Academic Status</DetailLabel>
+                <DetailValue>{selectedMember.academicStatus || 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Professional Status</DetailLabel>
+                <DetailValue>{selectedMember.professionalCareerStatus || 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Field of Study</DetailLabel>
+                <DetailValue>{selectedMember.generalFieldOfStudy || 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>Specialization</DetailLabel>
+                <DetailValue>{selectedMember.fieldOfSpecialization || 'N/A'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>R&D Team</DetailLabel>
+                <DetailValue>{selectedMember.rdTeam || 'N/A'}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>Organization</DetailLabel>
@@ -909,6 +951,20 @@ export const MembersManager = () => {
                 </DetailValue>
               </DetailItem>
             </DetailGrid>
+
+            {selectedMember.researchInterest && (
+              <DetailItem style={{ marginBottom: '1.5rem' }}>
+                <DetailLabel>Research Interest</DetailLabel>
+                <BioText>{selectedMember.researchInterest}</BioText>
+              </DetailItem>
+            )}
+
+            {selectedMember.activitiesExperiences && (
+              <DetailItem style={{ marginBottom: '1.5rem' }}>
+                <DetailLabel>Activities & Experiences</DetailLabel>
+                <BioText>{selectedMember.activitiesExperiences}</BioText>
+              </DetailItem>
+            )}
 
             {selectedMember.expertise && selectedMember.expertise.length > 0 && (
               <DetailItem style={{ marginBottom: '1.5rem' }}>
@@ -979,15 +1035,9 @@ export const MembersManager = () => {
         <ModalContent>
           <FormGrid>
             <Input
-              label="First Name"
-              value={editForm.firstName || ''}
-              onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-              fullWidth
-            />
-            <Input
-              label="Last Name"
-              value={editForm.lastName || ''}
-              onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+              label="Full Name"
+              value={editForm.fullName || ''}
+              onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
               fullWidth
             />
             <Input
@@ -998,9 +1048,52 @@ export const MembersManager = () => {
               fullWidth
             />
             <Input
-              label="Profession"
-              value={editForm.profession || ''}
-              onChange={(e) => setEditForm({ ...editForm, profession: e.target.value })}
+              label="Phone"
+              value={editForm.phone || ''}
+              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+              fullWidth
+            />
+            <div>
+              <DetailLabel style={{ marginBottom: '0.5rem' }}>Gender</DetailLabel>
+              <select
+                value={editForm.gender || ''}
+                onChange={(e) => setEditForm({ ...editForm, gender: e.target.value as 'M' | 'F' })}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: '2px solid var(--color-neutral-200)',
+                  borderRadius: 'var(--radius-lg)',
+                  fontSize: '0.9375rem',
+                  outline: 'none',
+                }}
+              >
+                <option value="">Select Gender</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <Input
+              label="Academic Status"
+              value={editForm.academicStatus || ''}
+              onChange={(e) => setEditForm({ ...editForm, academicStatus: e.target.value })}
+              fullWidth
+            />
+            <Input
+              label="Professional Status"
+              value={editForm.professionalCareerStatus || ''}
+              onChange={(e) => setEditForm({ ...editForm, professionalCareerStatus: e.target.value })}
+              fullWidth
+            />
+            <Input
+              label="Field of Study"
+              value={editForm.generalFieldOfStudy || ''}
+              onChange={(e) => setEditForm({ ...editForm, generalFieldOfStudy: e.target.value })}
+              fullWidth
+            />
+            <Input
+              label="Specialization"
+              value={editForm.fieldOfSpecialization || ''}
+              onChange={(e) => setEditForm({ ...editForm, fieldOfSpecialization: e.target.value })}
               fullWidth
             />
             <Input
@@ -1109,7 +1202,7 @@ export const MembersManager = () => {
           <DeleteWarning>
             <AlertTriangle size={24} />
             <p>
-              Are you sure you want to delete <strong>{selectedMember?.firstName} {selectedMember?.lastName}</strong>?
+              Are you sure you want to delete <strong>{selectedMember ? getDisplayName(selectedMember) : ''}</strong>?
               This action cannot be undone and will remove all member data permanently.
             </p>
           </DeleteWarning>

@@ -134,7 +134,7 @@ const AnimatedRoutes = () => {
           }
         />
         <Route
-          path="/services"
+          path="/programs"
           element={
             <Layout>
               <PageTransition>

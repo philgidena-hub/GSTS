@@ -480,13 +480,13 @@ export const Footer = () => {
                 <FooterLink to="/about">About Us</FooterLink>
               </FooterLinkItem>
               <FooterLinkItem>
-                <FooterLink to="/services">Our Services</FooterLink>
+                <FooterLink to="/programs">Programs</FooterLink>
               </FooterLinkItem>
               <FooterLinkItem>
                 <FooterLink to="/projects">Projects</FooterLink>
               </FooterLinkItem>
               <FooterLinkItem>
-                <FooterLink to="/news">News & Blog</FooterLink>
+                <FooterLink to="/news">News & Events</FooterLink>
               </FooterLinkItem>
               <FooterLinkItem>
                 <FooterLink to="/membership">Membership</FooterLink>
@@ -498,10 +498,10 @@ export const Footer = () => {
           </FooterColumn>
 
           <FooterColumn>
-            <FooterTitle>Support</FooterTitle>
+            <FooterTitle>Resources</FooterTitle>
             <FooterLinks>
               <FooterLinkItem>
-                <FooterLink to="/faq">FAQs</FooterLink>
+                <FooterLink to="/faqs">FAQs</FooterLink>
               </FooterLinkItem>
               <FooterLinkItem>
                 <FooterLink to="/careers">Careers</FooterLink>

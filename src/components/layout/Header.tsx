@@ -474,9 +474,9 @@ const navItems = [
       { label: 'Our Team', href: '/about/team' },
     ],
   },
-  { label: 'Services', href: '/services' },
+  { label: 'Programs', href: '/programs' },
   { label: 'Projects', href: '/projects' },
-  { label: 'News', href: '/news' },
+  { label: 'News & Events', href: '/news' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -517,7 +517,7 @@ export const Header = () => {
       <TopBar>
         <TopBarContainer>
           <TopBarLeft>
-            <TopBarLink to="/support">Support</TopBarLink>
+            <TopBarLink to="/resources">Resources</TopBarLink>
             <TopBarLink to="/careers">Careers</TopBarLink>
             <TopBarLink to="/faqs">FAQs</TopBarLink>
           </TopBarLeft>

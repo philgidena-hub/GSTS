@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from './components/layout';
 import { AdminLayout } from './components/admin/AdminLayout';
-import { Home, Membership, Login, About, Services, Contact, News, NewsDetail, Projects } from './pages';
+import { Home, Membership, Login, About, Services, Contact, News, NewsDetail, Projects, Resources } from './pages';
 import { MembershipSuccess } from './pages/MembershipSuccess';
 import { MemberPortal } from './pages/MemberPortal';
 import {
@@ -22,6 +22,7 @@ import {
   FAQManager,
   PartnersManager,
   UsersManager,
+  ResourcesManager,
 } from './pages/admin';
 import { SetupAdmin } from './pages/admin/SetupAdmin';
 import { useAuthStore } from './stores/authStore';
@@ -183,6 +184,16 @@ const AnimatedRoutes = () => {
             </Layout>
           }
         />
+        <Route
+          path="/resources"
+          element={
+            <Layout>
+              <PageTransition>
+                <Resources />
+              </PageTransition>
+            </Layout>
+          }
+        />
 
         {/* Auth Routes */}
         <Route
@@ -223,6 +234,7 @@ const AnimatedRoutes = () => {
           <Route path="faqs" element={<FAQManager />} />
           <Route path="partners" element={<PartnersManager />} />
           <Route path="users" element={<UsersManager />} />
+          <Route path="resources" element={<ResourcesManager />} />
           <Route path="analytics" element={<Dashboard />} />
         </Route>
 

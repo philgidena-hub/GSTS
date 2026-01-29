@@ -13,3 +13,4 @@ export { StatisticsManager } from './StatisticsManager';
 export { FAQManager } from './FAQManager';
 export { PartnersManager } from './PartnersManager';
 export { UsersManager } from './UsersManager';
+export { ResourcesManager } from './ResourcesManager';

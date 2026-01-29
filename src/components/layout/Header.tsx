@@ -712,6 +712,16 @@ export const Header = () => {
                   <MobileNavLink to={item.href}>{item.label}</MobileNavLink>
                 </MobileNavItem>
               ))}
+              {/* Top bar links for mobile */}
+              <MobileNavItem>
+                <MobileNavLink to="/resources">Resources</MobileNavLink>
+              </MobileNavItem>
+              <MobileNavItem>
+                <MobileNavLink to="/careers">Careers</MobileNavLink>
+              </MobileNavItem>
+              <MobileNavItem>
+                <MobileNavLink to="/faqs">FAQs</MobileNavLink>
+              </MobileNavItem>
             </MobileNavList>
             <MobileActions>
               {isAuthenticated ? (

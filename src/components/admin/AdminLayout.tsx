@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Handshake,
   UserCog,
+  FolderOpen,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -311,6 +312,7 @@ const navItems = [
       { icon: Handshake, label: 'Partners', path: '/admin/partners', permission: 'canEditPartners' as const },
       { icon: BarChart3, label: 'Statistics', path: '/admin/statistics', permission: 'canEditStatistics' as const },
       { icon: HelpCircle, label: 'FAQs', path: '/admin/faqs', permission: 'canEditFAQs' as const },
+      { icon: FolderOpen, label: 'Resources', path: '/admin/resources', permission: 'canEditSettings' as const },
     ],
   },
   {

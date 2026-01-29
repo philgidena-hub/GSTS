@@ -349,3 +349,64 @@ export interface SiteSettings {
     keywords: string[];
   };
 }
+
+// Resource Types
+export type ResourceType = 'document' | 'link' | 'video' | 'publication';
+export type ResourceCategory =
+  | 'research-papers'
+  | 'policy-documents'
+  | 'educational-materials'
+  | 'reports'
+  | 'newsletters'
+  | 'presentations'
+  | 'tools'
+  | 'external-links'
+  | 'other';
+
+export interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  type: ResourceType;
+  category: ResourceCategory;
+  // For documents
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  // For links
+  externalUrl?: string;
+  // For videos
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  // Metadata
+  author?: string;
+  publishedDate?: string;
+  tags: string[];
+  downloadCount: number;
+  viewCount: number;
+  isFeatured: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+export interface ResourceCategory_Info {
+  id: ResourceCategory;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export const resourceCategories: ResourceCategory_Info[] = [
+  { id: 'research-papers', name: 'Research Papers', description: 'Academic research and publications', icon: 'FileText' },
+  { id: 'policy-documents', name: 'Policy Documents', description: 'Policy briefs and recommendations', icon: 'FileCheck' },
+  { id: 'educational-materials', name: 'Educational Materials', description: 'Learning resources and guides', icon: 'GraduationCap' },
+  { id: 'reports', name: 'Reports', description: 'Annual reports and assessments', icon: 'BarChart' },
+  { id: 'newsletters', name: 'Newsletters', description: 'GSTS newsletters and updates', icon: 'Mail' },
+  { id: 'presentations', name: 'Presentations', description: 'Slides and presentation materials', icon: 'Presentation' },
+  { id: 'tools', name: 'Tools & Templates', description: 'Useful tools and templates', icon: 'Wrench' },
+  { id: 'external-links', name: 'External Links', description: 'Useful external resources', icon: 'ExternalLink' },
+  { id: 'other', name: 'Other', description: 'Other resources', icon: 'Folder' },
+];

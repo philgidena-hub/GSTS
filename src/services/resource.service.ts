@@ -6,11 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  query,
-  where,
-  orderBy,
   increment,
-  serverTimestamp,
 } from 'firebase/firestore';
 import {
   ref,
@@ -24,78 +20,44 @@ import type { Resource, ResourceCategory, ResourceType } from '../types';
 const COLLECTION_NAME = 'resources';
 
 class ResourceService {
-  // Get all resources
+  // Get all resources (no composite index needed)
   async getResources(): Promise<Resource[]> {
     const resourcesRef = collection(db, COLLECTION_NAME);
-    const q = query(resourcesRef, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const snapshot = await getDocs(resourcesRef);
+    const resources = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as Resource[];
+    // Sort client-side to avoid index requirement
+    return resources.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
-  // Get published resources only
+  // Get published resources only (client-side filtering)
   async getPublishedResources(): Promise<Resource[]> {
-    const resourcesRef = collection(db, COLLECTION_NAME);
-    const q = query(
-      resourcesRef,
-      where('isPublished', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Resource[];
+    const allResources = await this.getResources();
+    return allResources.filter((r) => r.isPublished);
   }
 
-  // Get resources by category
+  // Get resources by category (client-side filtering)
   async getResourcesByCategory(category: ResourceCategory): Promise<Resource[]> {
-    const resourcesRef = collection(db, COLLECTION_NAME);
-    const q = query(
-      resourcesRef,
-      where('category', '==', category),
-      where('isPublished', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Resource[];
+    const publishedResources = await this.getPublishedResources();
+    return publishedResources.filter((r) => r.category === category);
   }
 
-  // Get resources by type
+  // Get resources by type (client-side filtering)
   async getResourcesByType(type: ResourceType): Promise<Resource[]> {
-    const resourcesRef = collection(db, COLLECTION_NAME);
-    const q = query(
-      resourcesRef,
-      where('type', '==', type),
-      where('isPublished', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Resource[];
+    const publishedResources = await this.getPublishedResources();
+    return publishedResources.filter((r) => r.type === type);
   }
 
-  // Get featured resources
+  // Get featured resources (client-side filtering)
   async getFeaturedResources(): Promise<Resource[]> {
-    const resourcesRef = collection(db, COLLECTION_NAME);
-    const q = query(
-      resourcesRef,
-      where('isFeatured', '==', true),
-      where('isPublished', '==', true),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Resource[];
+    const publishedResources = await this.getPublishedResources();
+    return publishedResources.filter((r) => r.isFeatured);
   }
 
   // Get single resource by ID
@@ -128,8 +90,14 @@ class ResourceService {
   // Delete file from storage
   async deleteFile(fileUrl: string): Promise<void> {
     try {
-      const storageRef = ref(storage, fileUrl);
-      await deleteObject(storageRef);
+      // Extract the path from the URL
+      const url = new URL(fileUrl);
+      const pathMatch = url.pathname.match(/\/o\/(.+?)(\?|$)/);
+      if (pathMatch) {
+        const filePath = decodeURIComponent(pathMatch[1]);
+        const storageRef = ref(storage, filePath);
+        await deleteObject(storageRef);
+      }
     } catch (error) {
       console.error('Error deleting file:', error);
     }
@@ -140,27 +108,27 @@ class ResourceService {
     data: Omit<Resource, 'id' | 'createdAt' | 'updatedAt' | 'downloadCount' | 'viewCount'>,
     file?: File
   ): Promise<string> {
+    const now = new Date().toISOString();
     const resourceData: any = {
       ...data,
       downloadCount: 0,
       viewCount: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: now,
+      updatedAt: now,
     };
 
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), resourceData);
-
-    // Upload file if provided
+    // If file is provided, upload it first before creating the document
     if (file) {
-      const fileData = await this.uploadFile(file, docRef.id);
-      await updateDoc(docRef, {
-        fileUrl: fileData.url,
-        fileName: fileData.fileName,
-        fileSize: fileData.fileSize,
-        fileType: fileData.fileType,
-      });
+      // Create a temporary ID for the file name
+      const tempId = Math.random().toString(36).substring(2, 15);
+      const fileData = await this.uploadFile(file, tempId);
+      resourceData.fileUrl = fileData.url;
+      resourceData.fileName = fileData.fileName;
+      resourceData.fileSize = fileData.fileSize;
+      resourceData.fileType = fileData.fileType;
     }
 
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), resourceData);
     return docRef.id;
   }
 
@@ -174,7 +142,7 @@ class ResourceService {
 
     const updateData: any = {
       ...data,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date().toISOString(),
     };
 
     // Upload new file if provided
@@ -227,19 +195,17 @@ class ResourceService {
   // Toggle featured status
   async toggleFeatured(id: string, isFeatured: boolean): Promise<void> {
     const docRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(docRef, { isFeatured, updatedAt: serverTimestamp() });
+    await updateDoc(docRef, { isFeatured, updatedAt: new Date().toISOString() });
   }
 
   // Toggle published status
   async togglePublished(id: string, isPublished: boolean): Promise<void> {
     const docRef = doc(db, COLLECTION_NAME, id);
-    await updateDoc(docRef, { isPublished, updatedAt: serverTimestamp() });
+    await updateDoc(docRef, { isPublished, updatedAt: new Date().toISOString() });
   }
 
   // Search resources
   async searchResources(searchTerm: string): Promise<Resource[]> {
-    // Note: Firestore doesn't support full-text search natively
-    // For production, consider using Algolia or similar
     const allResources = await this.getPublishedResources();
     const term = searchTerm.toLowerCase();
     return allResources.filter(

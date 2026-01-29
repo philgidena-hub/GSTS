@@ -177,6 +177,8 @@ const ResourceIcon = styled.div<{ $type: string }>`
       ? '#d1fae5'
       : $type === 'video'
       ? '#fee2e2'
+      : $type === 'publication'
+      ? '#fef3c7'
       : 'var(--color-neutral-100)'};
   display: flex;
   align-items: center;
@@ -188,6 +190,8 @@ const ResourceIcon = styled.div<{ $type: string }>`
       ? '#059669'
       : $type === 'video'
       ? '#dc2626'
+      : $type === 'publication'
+      ? '#d97706'
       : 'var(--color-neutral-600)'};
 `;
 
@@ -457,6 +461,8 @@ const getTypeIcon = (type: ResourceType) => {
       return <LinkIcon size={18} />;
     case 'video':
       return <Video size={18} />;
+    case 'publication':
+      return <FileText size={18} />;
     default:
       return <FileText size={18} />;
   }
@@ -499,6 +505,8 @@ export const ResourcesManager = () => {
     type: 'document' as ResourceType,
     category: 'research-papers' as ResourceCategory,
     externalUrl: '',
+    videoUrl: '',
+    thumbnailUrl: '',
     author: '',
     publishedDate: '',
     tags: [] as string[],
@@ -545,6 +553,8 @@ export const ResourcesManager = () => {
       type: 'document',
       category: 'research-papers',
       externalUrl: '',
+      videoUrl: '',
+      thumbnailUrl: '',
       author: '',
       publishedDate: '',
       tags: [],
@@ -568,6 +578,8 @@ export const ResourcesManager = () => {
       type: resource.type,
       category: resource.category,
       externalUrl: resource.externalUrl || '',
+      videoUrl: resource.videoUrl || '',
+      thumbnailUrl: resource.thumbnailUrl || '',
       author: resource.author || '',
       publishedDate: resource.publishedDate || '',
       tags: resource.tags,
@@ -797,6 +809,12 @@ export const ResourcesManager = () => {
                         <ResourceSubtitle>
                           {resource.type === 'document' && resource.fileName
                             ? `${resource.fileName} (${formatFileSize(resource.fileSize)})`
+                            : resource.type === 'video' && resource.videoUrl
+                            ? resource.videoUrl
+                            : resource.type === 'publication'
+                            ? resource.fileName
+                              ? `${resource.fileName} (${formatFileSize(resource.fileSize)})`
+                              : resource.externalUrl || 'Publication'
                             : resource.externalUrl || resource.type}
                         </ResourceSubtitle>
                       </div>
@@ -829,11 +847,14 @@ export const ResourcesManager = () => {
                       >
                         {resource.isFeatured ? <StarOff size={16} /> : <Star size={16} />}
                       </ActionButton>
-                      {resource.fileUrl && (
+                      {(resource.fileUrl || resource.externalUrl || resource.videoUrl) && (
                         <ActionButton
                           $variant="view"
-                          onClick={() => window.open(resource.fileUrl, '_blank')}
-                          title="View/Download"
+                          onClick={() => window.open(
+                            resource.fileUrl || resource.videoUrl || resource.externalUrl,
+                            '_blank'
+                          )}
+                          title="View/Open"
                         >
                           <ExternalLink size={16} />
                         </ActionButton>
@@ -922,9 +943,10 @@ export const ResourcesManager = () => {
               />
             </FormFullWidth>
 
+            {/* Document Type - File Upload */}
             {formData.type === 'document' && (
               <FormFullWidth>
-                <FormLabel>Upload File</FormLabel>
+                <FormLabel>Upload File *</FormLabel>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -978,16 +1000,109 @@ export const ResourcesManager = () => {
               </FormFullWidth>
             )}
 
-            {(formData.type === 'link' || formData.type === 'video') && (
+            {/* External Link Type - URL */}
+            {formData.type === 'link' && (
               <FormFullWidth>
                 <Input
-                  label="URL"
+                  label="External URL *"
                   value={formData.externalUrl}
                   onChange={(e) => setFormData({ ...formData, externalUrl: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="https://example.com/resource"
                   fullWidth
                 />
               </FormFullWidth>
+            )}
+
+            {/* Video Type - Video URL + Thumbnail */}
+            {formData.type === 'video' && (
+              <>
+                <FormFullWidth>
+                  <Input
+                    label="Video URL *"
+                    value={formData.videoUrl}
+                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                    fullWidth
+                  />
+                </FormFullWidth>
+                <FormFullWidth>
+                  <Input
+                    label="Thumbnail URL (optional)"
+                    value={formData.thumbnailUrl}
+                    onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
+                    placeholder="https://example.com/thumbnail.jpg"
+                    fullWidth
+                  />
+                </FormFullWidth>
+              </>
+            )}
+
+            {/* Publication Type - File Upload + External Link (DOI) */}
+            {formData.type === 'publication' && (
+              <>
+                <FormFullWidth>
+                  <FormLabel>Upload File (optional)</FormLabel>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    accept=".pdf,.doc,.docx"
+                    style={{ display: 'none' }}
+                  />
+                  <FileUploadArea
+                    $isDragOver={isDragOver}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragOver(true);
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                  >
+                    <Upload size={32} style={{ marginBottom: '0.5rem', color: 'var(--color-neutral-400)' }} />
+                    <p style={{ margin: 0, color: 'var(--color-neutral-600)' }}>
+                      Drag and drop a file here, or click to browse
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8125rem', color: 'var(--color-neutral-400)' }}>
+                      Supported: PDF, DOC, DOCX
+                    </p>
+                  </FileUploadArea>
+                  {selectedFile && (
+                    <FileInfo>
+                      <FileText size={24} color="var(--color-primary-600)" />
+                      <FileDetails>
+                        <FileName>{selectedFile.name}</FileName>
+                        <FileSize>{formatFileSize(selectedFile.size)}</FileSize>
+                      </FileDetails>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedFile(null)}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </FileInfo>
+                  )}
+                  {isEditModalOpen && selectedResource?.fileName && !selectedFile && (
+                    <FileInfo>
+                      <FileText size={24} color="var(--color-primary-600)" />
+                      <FileDetails>
+                        <FileName>{selectedResource.fileName}</FileName>
+                        <FileSize>{formatFileSize(selectedResource.fileSize)}</FileSize>
+                      </FileDetails>
+                    </FileInfo>
+                  )}
+                </FormFullWidth>
+                <FormFullWidth>
+                  <Input
+                    label="DOI / Journal Link (optional)"
+                    value={formData.externalUrl}
+                    onChange={(e) => setFormData({ ...formData, externalUrl: e.target.value })}
+                    placeholder="https://doi.org/... or journal URL"
+                    fullWidth
+                  />
+                </FormFullWidth>
+              </>
             )}
 
             <Input

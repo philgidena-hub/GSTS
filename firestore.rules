@@ -9,7 +9,8 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin');
     }
 
     function isOwner(userId) {
@@ -88,6 +89,12 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Resources
+    match /resources/{resourceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }

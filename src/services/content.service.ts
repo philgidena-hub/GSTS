@@ -12,13 +12,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { db, storage } from '../config/firebase';
+import { db } from '../config/firebase';
+import { cloudinaryService } from './cloudinary.service';
 import type {
   HeroContent,
   AboutContent,
@@ -330,15 +325,17 @@ export const contentService = {
     await deleteDoc(doc(db, 'partners', id));
   },
 
-  // File Upload
+  // File Upload (using Cloudinary)
   async uploadFile(file: File, path: string): Promise<string> {
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
+    // Extract folder from the path (e.g., 'hero/123_image.jpg' -> 'hero')
+    const folder = path.split('/')[0] || 'uploads';
+    const result = await cloudinaryService.uploadFile(file, folder);
+    return result.url;
   },
 
-  async deleteFile(path: string): Promise<void> {
-    const storageRef = ref(storage, path);
-    await deleteObject(storageRef);
+  async deleteFile(_path: string): Promise<void> {
+    // Cloudinary deletion requires API secret (server-side only)
+    // Files are managed through Cloudinary dashboard
+    console.log('File reference removed. Clean up via Cloudinary dashboard if needed.');
   },
 };

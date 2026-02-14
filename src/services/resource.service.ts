@@ -8,13 +8,8 @@ import {
   deleteDoc,
   increment,
 } from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { db, storage } from '../config/firebase';
+import { db } from '../config/firebase';
+import { cloudinaryService } from './cloudinary.service';
 import type { Resource, ResourceCategory, ResourceType } from '../types';
 
 const COLLECTION_NAME = 'resources';
@@ -70,37 +65,23 @@ class ResourceService {
     return null;
   }
 
-  // Upload file to storage
-  async uploadFile(file: File, resourceId: string): Promise<{ url: string; fileName: string; fileSize: number; fileType: string }> {
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `${resourceId}_${Date.now()}.${fileExtension}`;
-    const storageRef = ref(storage, `resources/${fileName}`);
-
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
+  // Upload file to Cloudinary
+  async uploadFile(file: File, _resourceId: string): Promise<{ url: string; fileName: string; fileSize: number; fileType: string }> {
+    const result = await cloudinaryService.uploadFile(file, 'resources');
 
     return {
-      url,
+      url: result.url,
       fileName: file.name,
-      fileSize: file.size,
+      fileSize: result.fileSize,
       fileType: file.type,
     };
   }
 
-  // Delete file from storage
-  async deleteFile(fileUrl: string): Promise<void> {
-    try {
-      // Extract the path from the URL
-      const url = new URL(fileUrl);
-      const pathMatch = url.pathname.match(/\/o\/(.+?)(\?|$)/);
-      if (pathMatch) {
-        const filePath = decodeURIComponent(pathMatch[1]);
-        const storageRef = ref(storage, filePath);
-        await deleteObject(storageRef);
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-    }
+  // Delete file reference (Cloudinary deletion requires server-side API secret)
+  async deleteFile(_fileUrl: string): Promise<void> {
+    // Cloudinary deletion requires API secret (server-side only)
+    // Files can be managed through Cloudinary dashboard
+    console.log('File reference removed. Clean up via Cloudinary dashboard if needed.');
   }
 
   // Create new resource

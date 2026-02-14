@@ -9,7 +9,8 @@ service firebase.storage {
 
     function isAdmin() {
       return isAuthenticated() &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'super_admin');
     }
 
     function isValidImage() {
@@ -18,14 +19,25 @@ service firebase.storage {
     }
 
     function isValidDocument() {
-      return request.resource.contentType.matches('application/pdf') &&
-        request.resource.size < 10 * 1024 * 1024; // 10MB max
+      return request.resource.size < 20 * 1024 * 1024; // 20MB max
     }
 
     // Public assets (logos, hero images, etc.)
     match /public/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Hero section images
+    match /hero/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    // About section images
+    match /about/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
     }
 
     // User profile images
@@ -42,21 +54,33 @@ service firebase.storage {
     }
 
     // Blog post images
-    match /blog/{postId}/{fileName} {
+    match /blog/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin() && isValidImage();
     }
 
     // Project images
-    match /projects/{projectId}/{fileName} {
+    match /projects/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin() && isValidImage();
     }
 
     // Team member photos
-    match /team/{memberId}/{fileName} {
+    match /team/{allPaths=**} {
       allow read: if true;
       allow write: if isAdmin() && isValidImage();
+    }
+
+    // Partner logos
+    match /partners/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    // Resources (PDFs, docs, etc.)
+    match /resources/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidDocument();
     }
   }
 }
